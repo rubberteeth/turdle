@@ -22,12 +22,13 @@
   src: url('./Assets/Fonts/NanumPenScript-Regular.ttf');
 }
 
-.welcome-page {
+
+.welcome-container {
   width: min(100vw, 400px);
 }
 
 .welcome-page h1 {
-  text-shadow: 2px 2px rgb(146, 64, 14);
+  text-shadow: 2px 2px rgb(180, 83, 9);
 }
 
 dialog {
@@ -44,5 +45,8 @@ dialog.show {
 @media (width < 500px) {
   .welcome-page {
     gap: 35px;
+  }
+  .welcome-page h1 {
+    font-size: 75px;
   }
 }
