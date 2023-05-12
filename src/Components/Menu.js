@@ -7,8 +7,12 @@ export default function Menu( { setUser } ) {
   const toggleTheme = useThemeUpdate();
 
   const styles = {
-    backgroundColor : darkTheme ? 'rgb(146, 64, 14)' : 'rgb(255, 251, 235)',
+    backgroundColor : darkTheme ? 'rgb(75, 85, 99)' : 'rgb(220, 220, 220)',
     color: darkTheme ? '#eee' : '#000'
+  }
+
+  const buttonStyles = {
+    borderColor: darkTheme ? '#e5e7eb' : '#323232'
   }
 
   function closeMenu() {
@@ -22,8 +26,7 @@ export default function Menu( { setUser } ) {
 
   return (
     <nav 
-      // style={styles}
-      // className='menu bg-blue-500 absolute w-full h-full z-10 translate-x-full'
+      style={styles}
       className='menu bg-gray-300 absolute right-0 w-2/5 h-full z-10 
       translate-x-full font-cinzel'
     >
@@ -35,17 +38,23 @@ export default function Menu( { setUser } ) {
         <div className='w-0.5 h-full bg-black -rotate-45 absolute'></div>
       </div>
 
-      <ul className='w-full mt-16 p-6'>
+      <ul className='w-full mt-16 p-6 flex flex-col gap-4'>
         <li className='flex w-full'>
           
-          <label className='switch w-full flex items-center ' htmlFor="darkmode"> 
+          <label className='switch w-full flex items-center' htmlFor="darkmode"> 
             <p className='text-xl'>Dark Mode</p>
             <input type="checkbox" name='darkmode' id='darkmode' onClick={toggleTheme}/>
             <span className='slider round'></span>
           </label>
         </li>
-        <li>
-          <button onClick={logOut}>Sign Out</button>
+        <li className='flex justify-center'>
+          <button 
+            style={buttonStyles}
+            onClick={logOut}
+            className='border-2 rounded-md w-full'
+          >
+            Sign Out
+          </button>
         </li>
       </ul>
 
