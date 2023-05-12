@@ -15,23 +15,39 @@ function App() {
     menu.className = 'menu bg-gray-300 absolute right-0 h-full w-2/5 z-10 translate-x-0';
   }
 
+  function closeMenu() {
+    const menu = document.querySelector('.menu')
+    menu.className = 'menu bg-gray-300 absolute right-0 w-2/5 h-full z-10 translate-x-full';
+  }
+
+  function openHowTo() {
+    const dialog = document.querySelector('.page-1');
+    dialog.showModal();
+    dialog.classList.add('show');
+  };
+
   return (
     <ThemeProvider>
       <div 
         className="app min-h-screen bg-yellow-50 flex justify-center items-center"
       >
-        <Menu setUser={setUser}/>
+        <Menu 
+          setUser={setUser} 
+          closeMenu={closeMenu}
+        />
         {user
         ?
-          <Game openMenu={openMenu}/>
+          <Game 
+            openMenu={openMenu}
+            closeMenu={closeMenu}
+          />
         :
-        <>
           <WelcomePage 
             setUser={setUser}
+            openHowTo={openHowTo}
             openMenu={openMenu}
+            closeMenu={closeMenu}
           />
-        </>
-         
         }
       </div>
     </ThemeProvider>
