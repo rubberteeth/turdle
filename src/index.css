@@ -22,14 +22,51 @@
   src: url('./Assets/Fonts/NanumPenScript-Regular.ttf');
 }
 
+@media (width < 500px) {
+  .welcome-page {
+    gap: 35px;
+  }
+  .welcome-page h1 {
+    font-size: 65px;
+  }
+  .menu {
+    width: 100%;
+  }
+  .backspace img {
+    height: 40%;
+  }
+}
+
+
+#root {
+  height: 100%;
+}
+
+
+body,
+html {
+  height: 100dvh;
+}
+
+body {
+  overflow: hidden;
+}
+
+
+/* Welcome Page */
 
 .welcome-container {
   width: min(100vw, 400px);
 }
 
-.welcome-page h1 {
+/* Headers */
+
+h1 {
   text-shadow: 2px 2px rgb(22 163 74);
 }
+
+
+/* Dialog box */
 
 dialog {
   opacity: 0;  
@@ -46,29 +83,50 @@ dialog::backdrop {
   background: rgba(0, 0, 0, 0.4);
 }
 
-@media (width < 500px) {
-  .welcome-page {
-    gap: 35px;
-  }
-  .welcome-page h1 {
-    font-size: 65px;
-  }
-  .menu {
-    width: 100%;
-  }
-}
 
-body {
-  overflow: hidden;
-}
+
+
+/* Menu */
 
 .menu {
-  transition: all .5s;
+  transition: all .7s ease-in-out;
+}
+
+/* Game */
+
+
+
+
+/* Keyboard */
+
+.row-1 > div, 
+.row-2 > div, 
+.row-3 > div {
+  background-color: #2196F3;
+  border-radius: 4px;
+  display: grid;
+  place-items: center;
+  width: 9.4vw;
+  height: 9vh;
+  font-size: max(2.5vw, 50%);
+  font-weight: bold;
+}
+
+.enter, 
+.backspace {
+  flex: 1;
+}
+
+.row-3 .backspace {
+  display: flex;
+  justify-content: center;
 }
 
 
 
-/* Change checkboxes into sliders */
+
+
+/* Change menu checkboxes into sliders */
 
 /* The switch - the box around the slider */
 .switch {
@@ -82,6 +140,7 @@ body {
 .switch input {
   opacity: 0;
   height: 0;
+  width: 0;
 }
 
 /* The slider */
@@ -91,7 +150,7 @@ body {
   top: 0;
   right: 0;
   bottom: 0;
-  background-color: #ccc;
+  background-color: rgb(156 163 175);
   -webkit-transition: .4s;
   transition: .4s;
 }
@@ -131,3 +190,4 @@ input:checked + .slider:before {
 .slider.round:before {
   border-radius: 50%;
 }
+
