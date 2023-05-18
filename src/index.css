@@ -32,14 +32,17 @@
   .menu {
     width: 100%;
   }
-  .backspace img {
-    height: 40%;
+  .row-1, 
+  .row-2,
+  .row-3 {
+    font-size: 1em;
   }
 }
 
 
 #root {
   height: 100%;
+  display: flex;
 }
 
 
@@ -56,7 +59,7 @@ body {
 /* Welcome Page */
 
 .welcome-container {
-  width: min(100vw, 400px);
+  width: min(100vw, 600px);
 }
 
 /* Headers */
@@ -71,7 +74,7 @@ h1 {
 dialog {
   opacity: 0;  
   transition: all 0.5s ease-in-out;
-  max-width: 300px;
+  max-width: min(100vw, 500px);
 }
 
 dialog.show {
@@ -95,7 +98,12 @@ dialog::backdrop {
 /* Game */
 
 
-
+.guess-box {
+  border: 3px solid rgb(72, 72, 72);
+  width: min(16vw, 7vh);
+  height: min(16vw, 7vh);
+  font-size: 2.5rem;
+}
 
 /* Keyboard */
 
@@ -108,13 +116,18 @@ dialog::backdrop {
   place-items: center;
   width: 9.4vw;
   height: 9vh;
-  font-size: max(2.5vw, 50%);
+  font-size: 1.5em;
   font-weight: bold;
+  min-height: fit-content;
 }
 
 .enter, 
 .backspace {
   flex: 1;
+}
+
+div .enter {
+  font-size: .8rem;
 }
 
 .row-3 .backspace {
