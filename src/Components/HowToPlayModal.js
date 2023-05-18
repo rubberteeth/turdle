@@ -11,7 +11,7 @@ export default function HowToPlayModal() {
   }
 
   const darkDialog = {
-    backgroundColor: darkTheme ? 'rgb(31, 41, 55)' : 'rgb(249, 250, 251)'
+    backgroundColor: darkTheme ? 'rgb(31, 41, 55)' : 'rgb(250, 250, 200)'
   }
 
   function showPageTwoOfHowTo() {
@@ -35,15 +35,15 @@ export default function HowToPlayModal() {
     <>
       <dialog 
         style={styles}
-        className='page-1 text-center bg-green-50 rounded-xl 
-        shadow-lg border-4 border-gray-800'
+        className='page-1 text-center text-2xl bg-green-50 rounded-xl 
+        shadow-lg border-4 border-gray-800 w-full p-8'
       >
         <p className='font-bold'>
           You have 6 chances to guess the 5 letter word, your goal is to guess the word in the least amount of tries.
         </p>
         <button 
           className='text-md w-4/6 mt-8 mb-4 rounded-lg border-2 bg-green-600 border-gray-800 
-          font-bold text-gray-50 hover:text-green-600 hover:bg-gray-50'
+          pt-2 pb-2 font-bold text-gray-50 hover:text-green-600 hover:bg-gray-50'
           onClick={showPageTwoOfHowTo}
         >
             Next
@@ -51,7 +51,7 @@ export default function HowToPlayModal() {
       </dialog>
       <dialog 
         style={styles}
-        className='page-2 text-center bg-green-50 rounded-xl 
+        className='page-2 text-center text-2xl bg-green-50 rounded-xl p-8
         shadow-lg border-4 border-gray-800'
       >
         <p className='mb-2 text-md font-bold'>
@@ -59,25 +59,25 @@ export default function HowToPlayModal() {
         </p>
         <ul 
           style={darkDialog}
-          className='flex flex-col gap-4 mt-4 mb-2 shadow-lg border-2 
-          border-green-400 p-2 rounded-md '
+          className='flex flex-col gap-4 mt-8 mb-8 shadow-lg border-2
+          border-green-400 py-6 px-2 rounded-md '
         >
           <li className='flex gap-2 items-center text-left'>
-            <div className='h-4 w-4 bg-yellow-800'></div>
-            <p>Letter is not in the word</p>
+            <div className='h-8 w-8 bg-yellow-800'></div>
+            <p>Letter is <em>not</em> in the word</p>
           </li>
           <li className='flex gap-2 items-center text-left'>
-            <div className='h-4 w-4 bg-yellow-300 flex-shrink-0'></div>
-            <p>Letter is in the word, but in the wrong position</p>
+            <div className='h-8 w-8 bg-yellow-300 flex-shrink-0'></div>
+            <p>Letter is in the word, <em>but in the wrong position</em></p>
           </li>
           <li className='flex gap-2 items-center text-left'>
-            <div className='h-4 w-4 bg-green-600'></div>
-            <p>Letter is in the right position</p>
+            <div className='h-8 w-8 bg-green-600'></div>
+            <p>Letter is in the correct position</p>
           </li>
         </ul>
         <button 
-          className='text-md w-4/6 mt-4 rounded-lg border-2 bg-green-600 border-gray-800 
-          font-bold text-gray-50 hover:text-green-600 hover:bg-gray-50'
+          className='text-md w-4/6 rounded-lg border-2 bg-green-600 border-gray-800 
+          pt-2 pb-2 font-bold text-gray-50 hover:text-green-600 hover:bg-gray-50'
           onClick={closeHowTo}>
             Got it!
         </button>

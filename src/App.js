@@ -42,7 +42,7 @@ function App() {
   return (
     <ThemeProvider>
       <div 
-        className="app h-full flex flex-col justify-center items-center"
+        className="app flex-grow flex flex-col justify-center items-center"
       >
         <Header 
           user={user}

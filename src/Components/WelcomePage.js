@@ -28,28 +28,32 @@ export default function WelcomePage( { setUser, openHowTo, closeMenu } ) {
         <div className='welcome-container flex flex-col items-center font-quicksand gap-4 pb-20'>
           <div className='header flex items-center'>
             <img src={logo} alt="logo" className='h-12 -rotate-12 mr-1'/>
-            <h1 className='font-pen text-6xl text-center mb-2'>TURDLE</h1>
+            <h1 className='font-pen text-9xl text-center mb-2'>TURDLE</h1>
             <img src={logo} alt="logo" className='h-12 rotate-12 ml-3'/>
           </div>
           <button 
-            className='text-md w-4/6 mt-6 mb-6 pt-2 pb-2 rounded-lg border-2
-            border-gray-800 bg-green-600 font-bold text-gray-50
+            className='text-md w-4/6 mt-6 mb-6 pt-4 pb-4 rounded-lg border-2
+            border-gray-800 bg-green-600 font-bold text-2xl text-gray-50
             hover:text-green-600 hover:bg-gray-50'>
               Sign In
           </button>
           <div className='w-full flex flex-col items-center'>
-            <p className='text-xs pb-1'>
+            <p className='text-xl pb-1'>
               Don't have an account?  
             </p>
             <button 
               className='text-md w-4/6 pt-1 pb-1 rounded-lg border-2 bg-green-600 
-              border-gray-800 font-bold text-gray-50 hover:text-green-600 hover:bg-gray-50'>
+              border-gray-800 font-bold text-2xl text-gray-50 hover:text-green-600 hover:bg-gray-50'>
                 Sign Up
             </button>
-            <p className='text-sm mt-2 mb-2'><em>or</em></p>
+            <p 
+              className='text-xl mt-2 mb-2'
+            >
+              <em>or</em>
+            </p>
             <button 
               className='text-md w-4/6 pt-1 pb-1 rounded-lg border-2 bg-green-600 
-              border-gray-800 font-bold text-gray-50 hover:text-green-600 hover:bg-gray-50'
+              border-gray-800 font-bold text-2xl text-gray-50 hover:text-green-600 hover:bg-gray-50'
               onClick={() => changeUserState('guest')}>
                 Continue as Guest
             </button>
@@ -57,7 +61,7 @@ export default function WelcomePage( { setUser, openHowTo, closeMenu } ) {
           <button 
               onClick={openHowTo} 
               className='text-md w-4/6 pt-1 pb-1 rounded-lg border-2 bg-yellow-400 
-              border-gray-800 font-bold text-gray-50 hover:text-yellow-400 hover:bg-gray-50'>
+              border-gray-800 font-bold text-2xl text-gray-50 hover:text-yellow-400 hover:bg-gray-50'>
                 How To Play
           </button>
         </div>
