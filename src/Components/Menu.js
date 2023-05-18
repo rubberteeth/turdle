@@ -58,6 +58,14 @@ export default function Menu( { setUser, openHowTo, closeMenu } ) {
           </button>
         </li>
 
+        <li>
+          <button
+            style={buttonStyles}
+            className='border-2 rounded-md w-full bg-gray-400 hover:scale-105'
+          >
+            My Stats
+          </button>  
+        </li>  
 
 
 
