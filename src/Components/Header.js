@@ -15,7 +15,7 @@ export default function Header( { user, openMenu } ) {
   return (
     <header 
       style={styles}
-      className='w-full h-auto flex items-center justify-between p-2'
+      className='w-full h-auto flex items-center justify-between'
     >
       {
         user 
