@@ -3,7 +3,16 @@ import backspace from '../Assets/Pictures/backspace.png'
 
 
 
-export default function Keyboard( { currentGuess, setCurrentGuess, activeRow, setActiveRow } ) {
+export default function Keyboard( { currentGuess, setCurrentGuess, activeRow, setActiveRow, tempWord } ) {
+
+  // 
+  const tempWordList = [
+    'games',
+    'gamer',
+
+  ]
+  // 
+
 
 
   function handleBackspace() {
@@ -22,21 +31,56 @@ export default function Keyboard( { currentGuess, setCurrentGuess, activeRow, se
 
   // }
 
+  function lowerCaseGuess() {
+    return currentGuess.join('').toLowerCase();
+  }
+
+  function guessIsInWordList() {
+    if (tempWordList.indexOf(lowerCaseGuess()) === -1) return false
+    else return true
+  }
+
+  function animateWrongGuess() {
+    let guessRow = document.querySelector(`.guess-row-${activeRow}`);
+    guessRow.classList.add('shake')
+    setTimeout(() => {
+      guessRow.classList.remove('shake')
+    }, 400)
+  }
+
+  function showNotValidWordWarning() {
+    document.querySelector('.word-warning').classList.remove('opacity-0');
+    setTimeout(() => {
+      document.querySelector('.word-warning').classList.add('opacity-0');
+    }, 700);
+  }
+
   function handleGuessSubmit() {
+    // if not a full word return
     if (currentGuess.length !== 5) return
     
-    // if (currentGuess.join() is not in word list) {
-    // give error and return
-    // }
+    // if guess isn't in word list
+    if (guessIsInWordList() === false) {
+      animateWrongGuess()
+      showNotValidWordWarning()
+      return
+    }
     
-    // if (currentGuess === dailyWord) {
-    //   win game 
-    //   show stats
-    //   return
-    // }
+    
+    // if guess is correct show stats and end game loop
+    if (lowerCaseGuess() === tempWord.toLowerCase()) {
+      // win game
+      alert('you win') 
 
+      // show stats
+
+      // maybe set a game won state, or check db for some kind of game data
+      // to determine if game has been won and remove all click events in that case
+      return
+    }
+
+    // if full word, not correct word, and guess is in word list
     if (activeRow < 6) {
-      console.log(currentGuess.join(''))
       setCurrentGuess([])
       setActiveRow(prev => prev + 1)
     }
