@@ -1,7 +1,7 @@
 import React from 'react'
 import { useTheme } from '../ThemeContext'
 
-export default function HowToPlayModal() {
+export default function HowToPlayModal( { closeHowTo } ) {
 
   const darkTheme = useTheme()
 
@@ -21,14 +21,6 @@ export default function HowToPlayModal() {
     const pageTwo = document.querySelector('.page-2');
     pageTwo.showModal();
     pageTwo.classList.add('show')
-  };
-
-  function closeHowTo() {
-    const pageTwo = document.querySelector('.page-2');
-    pageTwo.classList.remove('show');
-    setTimeout(() => {
-      pageTwo.close();
-    }, 500);
   };
 
   return (
@@ -63,7 +55,7 @@ export default function HowToPlayModal() {
           border-green-400 py-6 px-2 rounded-md '
         >
           <li className='flex gap-2 items-center text-left'>
-            <div className='h-8 w-8 bg-yellow-800'></div>
+            <div className='h-8 w-8 bg-yellow-700'></div>
             <p>Letter is <em>not</em> in the word</p>
           </li>
           <li className='flex gap-2 items-center text-left'>
