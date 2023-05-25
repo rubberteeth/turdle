@@ -40,6 +40,21 @@
 }
 
 
+@keyframes shake {
+  0%, 40%, 80% {
+    transform: translateX(-8px);
+  }
+  20%, 60%, 100% {
+    transform: translateX(8px);
+  }
+}
+
+.shake {
+  animation-name: shake;
+  animation-duration: 500ms;
+}
+
+
 #root {
   height: 100%;
   display: flex;
@@ -74,7 +89,7 @@ h1 {
 dialog {
   opacity: 0;  
   transition: all 0.5s ease-in-out;
-  max-width: min(100vw, 500px);
+  max-width: min(100vw, 600px);
 }
 
 dialog.show {
@@ -100,17 +115,28 @@ dialog::backdrop {
 
 .guess-box {
   border: 3px solid rgb(72, 72, 72);
-  width: min(16vw, 7vh);
-  height: min(16vw, 7vh);
-  font-size: 2.5rem;
+  width: min(16.5vw, 7.5vh);
+  height: min(19vw, 9vh);
+  font-size: min(2.5rem, 6vh);
+  transition: all .4s ease-in-out;
 }
+
+/* Game effects */
+
+.rotate-y {
+  transform: rotateY(90deg);
+}
+
+
+
+
+
 
 /* Keyboard */
 
 .row-1 > div, 
 .row-2 > div, 
 .row-3 > div {
-  background-color: #2196F3;
   border-radius: 4px;
   display: grid;
   place-items: center;
@@ -123,7 +149,9 @@ dialog::backdrop {
 
 .enter, 
 .backspace {
-  flex: 1;
+  flex-grow: 1;
+  flex-shrink: 1;
+  flex-basis: 0%;
 }
 
 div .enter {
@@ -203,4 +231,6 @@ input:checked + .slider:before {
 .slider.round:before {
   border-radius: 50%;
 }
+
+
 
