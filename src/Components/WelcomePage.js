@@ -2,7 +2,7 @@ import React from 'react';
 import logo from '../Assets/Pictures/turd.png'
 import { useTheme } from '../ThemeContext';
 
-export default function WelcomePage( { setUser, openHowTo, closeMenu } ) {
+export default function WelcomePage( { setUser, openHowTo, closeMenu, openSignUp } ) {
 
   const darkTheme = useTheme()
 
@@ -42,6 +42,7 @@ export default function WelcomePage( { setUser, openHowTo, closeMenu } ) {
               Don't have an account?  
             </p>
             <button 
+              onClick={openSignUp}
               className='text-md w-4/6 pt-1 pb-1 rounded-lg border-2 bg-green-600 
               border-gray-800 font-bold text-2xl text-gray-50 hover:text-green-600 hover:bg-gray-50'>
                 Sign Up
