@@ -4,29 +4,6 @@ import { qualityWordsArray } from '../Assets/Data/qualityWords'
 
 import Keyboard from './Keyboard'
 
-import Words from './Words'
-
-
-
-const playerStats = {
-  gamesPlayed: 0,
-  winPercentage: 0,
-  currentStreak: 0,
-  maxStreak: 0,
-  guessStats : {
-    guessedInOne: 0,
-    guessedInTwo: 0,
-    guessedInThree: 0,
-    guessedInFour: 0,
-    guessedInFive: 0,
-    guessedInSix: 0,
-  },
-  incomplete: 0,
-  lastGamePlayed: new Date(),
-}
-
-
-
 
 export default function Game( { closeMenu } ) {
 
@@ -63,10 +40,6 @@ export default function Game( { closeMenu } ) {
     if (currentGuess.length === 5) return;
     setCurrentGuess(prev => [...prev, letter])
   } 
-
-  // function storeGuessDataLocally() {
-
-  // }
 
   function lowerCaseGuess() {
     return currentGuess.join('').toLowerCase();
@@ -114,6 +87,7 @@ export default function Game( { closeMenu } ) {
 
 
       // show stats
+
 
       return
     }
@@ -242,9 +216,6 @@ export default function Game( { closeMenu } ) {
           <div className="guess-box flex justify-center items-center"></div>
         </div>
         
-
-
-        {/* <Words /> */}
       </div>
       <Keyboard 
         handleLetterInput={handleLetterInput}
