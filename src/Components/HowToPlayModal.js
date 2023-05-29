@@ -24,7 +24,7 @@ export default function HowToPlayModal( { closeHowTo } ) {
   };
 
   return (
-    <>
+    <div className='font-quicksand'>
       <dialog 
         style={styles}
         className='page-1 text-center text-2xl bg-green-50 rounded-xl 
@@ -52,7 +52,7 @@ export default function HowToPlayModal( { closeHowTo } ) {
         <ul 
           style={darkDialog}
           className='flex flex-col gap-4 mt-8 mb-8 shadow-lg border-2
-          border-green-400 py-6 px-2 rounded-md '
+          border-green-400 py-6 px-2 rounded-md font-bold'
         >
           <li className='flex gap-2 items-center text-left'>
             <div className='h-8 w-8 bg-yellow-700'></div>
@@ -74,6 +74,6 @@ export default function HowToPlayModal( { closeHowTo } ) {
             Got it!
         </button>
       </dialog>
-    </>
+    </div>
   )
 }
