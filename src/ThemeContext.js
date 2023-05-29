@@ -1,4 +1,4 @@
-import React, { useContext, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 
 const ThemeContext = React.createContext();
 const ThemeUpdateContext = React.createContext();
@@ -14,6 +14,18 @@ export function useThemeUpdate() {
 export function ThemeProvider({ children }) {
   const [darkTheme, setDarkTheme] = useState(false);
 
+  useEffect(() => {
+    function getDarkModeSettingFromStorage() {
+      if (!localStorage.getItem('turdle-data-key')) return
+      let data = JSON.parse(localStorage.getItem('turdle-data-key'))
+      if (data.darkTheme !== darkTheme) {
+        setDarkTheme(data.darkTheme)
+        return
+      }
+    }
+    getDarkModeSettingFromStorage()
+  }, [darkTheme])
+
   function toggleTheme() {
     setDarkTheme(curr => !curr);
   };
@@ -25,5 +37,4 @@ export function ThemeProvider({ children }) {
       </ThemeUpdateContext.Provider>
     </ThemeContext.Provider>
   )
-
 }
