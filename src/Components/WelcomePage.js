@@ -2,7 +2,7 @@ import React from 'react';
 import logo from '../Assets/Pictures/turd.png'
 import { useTheme } from '../ThemeContext';
 
-export default function WelcomePage( { setUser, openHowTo, closeMenu, openSignUp } ) {
+export default function WelcomePage( { setUser, openHowTo, closeMenu, openSignUp, openSignIn } ) {
 
   const darkTheme = useTheme()
 
@@ -18,6 +18,8 @@ export default function WelcomePage( { setUser, openHowTo, closeMenu, openSignUp
     //
   }
 
+    
+
   return (
     <>
       <div 
@@ -32,6 +34,7 @@ export default function WelcomePage( { setUser, openHowTo, closeMenu, openSignUp
             <img src={logo} alt="logo" className='h-12 rotate-12 ml-3'/>
           </div>
           <button 
+            onClick={openSignIn}
             className='text-md w-4/6 mt-6 mb-6 pt-4 pb-4 rounded-lg border-2
             border-gray-800 bg-green-600 font-bold text-2xl text-gray-50
             hover:text-green-600 hover:bg-gray-50'>
