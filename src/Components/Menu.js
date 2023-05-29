@@ -1,7 +1,7 @@
 import React from 'react'
 import { useTheme, useThemeUpdate } from '../ThemeContext';
 
-export default function Menu( { setUser, openHowTo, closeMenu } ) {
+export default function Menu( { signOutUser, openHowTo, closeMenu } ) {
 
   const darkTheme = useTheme()
   const toggleTheme = useThemeUpdate();
@@ -17,9 +17,21 @@ export default function Menu( { setUser, openHowTo, closeMenu } ) {
     padding: '5px',
   }
 
-  function logOut() {
-    setUser(null)
+
+  // function toggleStorageDarkTheme() {
+  //   if (localStorage.getItem('dark-theme')) {
+  //     localStorage.setItem('dark-theme', JSON.stringify(!localStorage.getItem('dark-theme')))
+  //   } else {
+  //     localStorage.setItem('darkTheme', JSON.stringify(!darkTheme))
+  //   }
+  // }
+
+  function toggleStorageDarkTheme() {
+    let data = JSON.parse(localStorage.getItem('turdle-data-key'))
+    data = {...data, darkTheme: !darkTheme}
+    localStorage.setItem('turdle-data-key', JSON.stringify(data))
   }
+
 
   return (
     <nav 
@@ -40,7 +52,11 @@ export default function Menu( { setUser, openHowTo, closeMenu } ) {
         <li className='flex w-full'>
           <label className='switch w-full flex items-center' htmlFor="darkmode"> 
             <p className='text-xl'>Dark Mode</p>
-            <input type="checkbox" name='darkmode' id='darkmode' onClick={toggleTheme}/>
+            <input type="checkbox" name='darkmode' id='darkmode' 
+              onChange={() => {
+                toggleStorageDarkTheme()
+                toggleTheme()
+                }}/>
             <span className='slider round'></span>
           </label>
         </li>
@@ -74,8 +90,8 @@ export default function Menu( { setUser, openHowTo, closeMenu } ) {
           <button 
             style={buttonStyles}
             onClick={() => {
+              signOutUser()
               closeMenu()
-              logOut()
             }}
             className='border-2 rounded-md w-full bg-gray-400 hover:scale-105'
           >
