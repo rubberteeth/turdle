@@ -8,7 +8,8 @@ import Menu from "./Components/Menu";
 import Game from "./Components/Game";
 import HowToPlayModal from "./Components/HowToPlayModal";
 import Header from "./Components/Header";
-
+import SignUp from "./Components/SignUp";
+import SignIn from "./Components/SignIn";
 
 import { firebaseConfig } from "./firebaseConfig";
 import { initializeApp } from 'firebase/app'
@@ -22,67 +23,145 @@ import {
   getDoc,
   updateDoc,
   setDoc,
-  } from 'firebase/firestore'
+} from 'firebase/firestore'
   
-import { getAuth, createUserWithEmailAndPassword } from "firebase/auth";
-import SignUp from "./Components/SignUp";
+import { 
+  getAuth, 
+  createUserWithEmailAndPassword ,
+  signInWithEmailAndPassword,
+  signOut
+} from "firebase/auth";
+
+
+const localData = {
+  user: null, 
+  darkTheme: false, 
+  activeRow: null,
+  guesses: {
+    rowOne: null,
+    rowTwo: null,
+    rowThree: null,
+    rowFour: null,
+    rowFive: null,
+    rowSix: null,
+  },
+}
+
+
+const playerInfo = {
+  gamesPlayed: 0,
+  winPercentage: 0,
+  currentStreak: 0,
+  maxStreak: 0,
+  guessStats : {
+    guessedInOne: 0,
+    guessedInTwo: 0,
+    guessedInThree: 0,
+    guessedInFour: 0,
+    guessedInFive: 0,
+    guessedInSix: 0,
+  },
+  incomplete: 0,
+  lastGamePlayed: null,
+}
 
 
 async function addUserToDatabase(user) {
   const usersRef = collection(getFirestore(), "users");
-  await setDoc(doc(usersRef, `${user}`), {
-    user: `${user}`, 
-    city: "whitby", 
-    country: "canada",
-    timeCreated: serverTimestamp()
+  await setDoc(doc(usersRef, user.email), {
+    email: user.email, 
+    timeCreated: user.metadata.creationTime,
+    uid: user.uid
   });
 }
 
-
 async function getUserFromDatabase(user) {
-  const docRef = doc(getFirestore(), "users", `${user}`);
+  const docRef = doc(getFirestore(), "users", user.email);
   const docSnap = await getDoc(docRef);
   if (docSnap.exists()) {
     console.log("Document data:", docSnap.data());
   } else {
     console.log("No such document!");
+    return false
   }
-  // get date/time from server timestamp
-  console.log(new Date(parseInt(docSnap.data().timeCreated.seconds.toString() + '000')))
-  console.log(window.navigator)
+}
+
+async function updateUserData(user) {
+  const docRef = doc(getFirestore(), "users", user.email)
+  const docSnap = await getDoc(docRef);
+  if (docSnap.exists()) {
+    setDoc(docRef, {this: 'data'}, {merge: true})
+    console.log("Document data:", docSnap.data());
+  } else {
+    console.log("Error: No such document!");
+    return false
+  }
 }
 
 
-function createUser(email, password) {
-  createUserWithEmailAndPassword(getAuth(), email, password)
-    .then((userCredential) => {
-      const user = userCredential.user;
-      console.log(user)
-    })
-    .catch((error) => {
-      console.log(error.code, error.message)
-    });
-}
-
-function localStorageGuestDataKey(userID) {
+function initLocalStorageData(userID) {
   if (localStorage.getItem('turdle-data-key')) {
     console.log(localStorage.getItem('turdle-data-key'))
   } else {
-    localStorage.setItem('turdle-data-key', JSON.stringify(`${userID}`))
+    localStorage.setItem('turdle-data-key', JSON.stringify(localData))
   }
 }
+
+
+
+
 
 
 function App() {
   const [user, setUser] = useState(null);
-  const [dataKey, setDataKey] = useState('');
 
 
+  const auth = getAuth()
 
-
-  function getKeyFromStorage() {
-    setDataKey(() => JSON.parse(localStorage.getItem('turdle-data-key')));
+  function createUser(email, password) {
+    createUserWithEmailAndPassword(auth, email, password)
+      .then((userCredential) => {
+        const user = userCredential.user;
+        alert('account successfully created!')
+        setUser(user)
+        addUserToDatabase(user)
+        closeSignUp();
+      })
+      .catch((e) => {
+        console.log(e.code, e.message)
+        alert(`failed to create account: ${e.code} `)
+      });
+      
   }
+
+  function signInUser(email, password) {
+    signInWithEmailAndPassword(auth, email, password)
+      .then((userCredential) => {
+        console.log('successful log in')
+        const user = userCredential.user;
+        setUser(user);
+      })
+      .catch(e => {
+        console.log(e.code, e.message)
+        alert(`log in attempt failed: ${e.message}`)
+      })
+  }
+
+  function signOutUser() {
+    signOut(auth)
+      .then(() => {
+        setUser(null)
+        alert('you have been signed out')
+      })
+      .catch((e) => {
+        console.log(e.code, e.message)
+        alert(e.code)
+      })
+  }
+
+  // function getDataFromStorage() {
+  //   let data = JSON.parse(localStorage.getItem('turdle-data-key'));
+  // }
   
 
 
@@ -125,11 +204,11 @@ function App() {
 
   function openSignUp() {
     const signUp = document.querySelector('.sign-up');
+    document.querySelector('#sign-up-email').value = '';
+    document.querySelector('#sign-up-password').value = '';
     try {
       signUp.close();
-    } catch (e) {
-      console.log(e);
-    } 
+    } catch (e) {console.log(e)} 
     signUp.showModal();
     signUp.classList.add('show');
   }
@@ -142,19 +221,48 @@ function App() {
     }, 500);
   }
 
+  function openSignIn() {
+    const signIn = document.querySelector('.sign-in');
+    document.querySelector('#email').value = '';
+    document.querySelector('#password').value = '';
+    try {
+      signIn.close();
+    } catch (e) {console.log(e)} 
+    signIn.showModal();
+    signIn.classList.add('show')
+  }
+
+  function closeSignIn() {
+    const signIn = document.querySelector('.sign-in');
+    signIn.classList.remove('show');
+    setTimeout(() => {
+      signIn.close()
+    }, 500)
+  }
 
 
   return (
     <ThemeProvider>
       <div 
+        onLoad={initLocalStorageData}
         className="app flex-grow flex flex-col justify-center items-center"
       >
         <Header 
           user={user}
           openMenu={openMenu}
         />
+
+
+
+        <div>
+          {user ? <p>Hello {user.email}!</p> : null}
+        </div>
+        <button onClick={() => updateUserData(user)}>TEST TEST TEST TEST</button>
+
+
+
         <Menu 
-          setUser={setUser} 
+          signOutUser={signOutUser} 
           openHowTo={openHowTo}
           closeMenu={closeMenu}
         />
@@ -163,11 +271,15 @@ function App() {
         />
         <SignUp 
           closeSignUp={closeSignUp}
+          createUser={createUser}
+        />
+        <SignIn 
+          closeSignIn={closeSignIn}
+          signInUser={signInUser}
         />
 
-
-        <button className="p-4 border-2 w-full"
-        onClick={() => {createUser('mike.melchior@outlook.com', '123456')}}>TEST ADD USER</button>
+        {/* <button className="p-4 border-2 w-full"
+        onClick={() => {createUser('mike@outlook.com', '123456')}}>TEST ADD USER</button> */}
 
 
         {user
@@ -181,6 +293,7 @@ function App() {
             openHowTo={openHowTo}
             closeMenu={closeMenu}
             openSignUp={openSignUp}
+            openSignIn={openSignIn}
           />
         }
       </div>
