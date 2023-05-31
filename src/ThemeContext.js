@@ -16,10 +16,10 @@ export function ThemeProvider({ children }) {
 
   useEffect(() => {
     function getDarkModeSettingFromStorage() {
-      if (!localStorage.getItem('turdle-data-key')) return
-      let data = JSON.parse(localStorage.getItem('turdle-data-key'))
-      if (data.darkTheme !== darkTheme) {
-        setDarkTheme(data.darkTheme)
+      if (!localStorage.getItem('turdle-theme')) return
+      let theme = JSON.parse(localStorage.getItem('turdle-theme'))
+      if (theme !== darkTheme) {
+        setDarkTheme(theme)
         return
       }
     }
