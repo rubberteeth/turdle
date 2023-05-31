@@ -18,18 +18,10 @@ export default function Menu( { signOutUser, openHowTo, closeMenu } ) {
   }
 
 
-  // function toggleStorageDarkTheme() {
-  //   if (localStorage.getItem('dark-theme')) {
-  //     localStorage.setItem('dark-theme', JSON.stringify(!localStorage.getItem('dark-theme')))
-  //   } else {
-  //     localStorage.setItem('darkTheme', JSON.stringify(!darkTheme))
-  //   }
-  // }
-
   function toggleStorageDarkTheme() {
-    let data = JSON.parse(localStorage.getItem('turdle-data-key'))
-    data = {...data, darkTheme: !darkTheme}
-    localStorage.setItem('turdle-data-key', JSON.stringify(data))
+    let data = JSON.parse(localStorage.getItem('turdle-theme'))
+    data = !darkTheme
+    localStorage.setItem('turdle-theme', JSON.stringify(data))
   }
 
 
@@ -45,14 +37,14 @@ export default function Menu( { signOutUser, openHowTo, closeMenu } ) {
       >
         <div className='w-0.5 h-full bg-black rotate-45 absolute '></div>
         <div className='w-0.5 h-full bg-black -rotate-45 absolute'></div>
-      </div>
+      </div> 
 
       <ul className='w-full mt-16 p-6 flex flex-col gap-4'>
 
         <li className='flex w-full'>
           <label className='switch w-full flex items-center' htmlFor="darkmode"> 
             <p className='text-xl'>Dark Mode</p>
-            <input type="checkbox" name='darkmode' id='darkmode' 
+            <input type="checkbox" name='darkmode' id='darkmode' checked={darkTheme}
               onChange={() => {
                 toggleStorageDarkTheme()
                 toggleTheme()
