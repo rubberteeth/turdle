@@ -110,7 +110,7 @@ export default function SignIn( { closeSignIn, signInUser } ) {
           className='text-md w-4/6 mt-2 mb-4 rounded-lg border-2 bg-slate-400 border-gray-800 
           pt-2 pb-2 font-bold text-gray-50 hover:text-slate-400 hover:bg-gray-50'
         >
-          Close
+          Cancel
         </button>
       </dialog>
   )
