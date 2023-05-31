@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import './index.css';
 import { ThemeProvider } from "./ThemeContext";
 
@@ -31,24 +31,13 @@ import {
   signInWithEmailAndPassword,
   signOut
 } from "firebase/auth";
+import DataWarning from "./Components/DataWarning";
 
 
-const localData = {
-  user: null, 
-  darkTheme: false, 
-  activeRow: null,
-  guesses: {
-    rowOne: null,
-    rowTwo: null,
-    rowThree: null,
-    rowFour: null,
-    rowFive: null,
-    rowSix: null,
-  },
-}
 
 
-const playerInfo = {
+
+const playerInfoTemplate = {
   gamesPlayed: 0,
   winPercentage: 0,
   currentStreak: 0,
@@ -66,54 +55,28 @@ const playerInfo = {
 }
 
 
-async function addUserToDatabase(user) {
-  const usersRef = collection(getFirestore(), "users");
-  await setDoc(doc(usersRef, user.email), {
-    email: user.email, 
-    timeCreated: user.metadata.creationTime,
-    uid: user.uid
-  });
+const dataTemplate = {
+  username: null, 
+  activeRow: null,
+  guessRow: {
+    1: null,
+    2: null,
+    3: null,
+    4: null,
+    5: null,
+    6: null,
+  },
+  gameData: playerInfoTemplate,
 }
-
-async function getUserFromDatabase(user) {
-  const docRef = doc(getFirestore(), "users", user.email);
-  const docSnap = await getDoc(docRef);
-  if (docSnap.exists()) {
-    console.log("Document data:", docSnap.data());
-  } else {
-    console.log("No such document!");
-    return false
-  }
-}
-
-async function updateUserData(user) {
-  const docRef = doc(getFirestore(), "users", user.email)
-  const docSnap = await getDoc(docRef);
-  if (docSnap.exists()) {
-    setDoc(docRef, {this: 'data'}, {merge: true})
-    console.log("Document data:", docSnap.data());
-  } else {
-    console.log("Error: No such document!");
-    return false
-  }
-}
-
-
-function initLocalStorageData(userID) {
-  if (localStorage.getItem('turdle-data-key')) {
-    console.log(localStorage.getItem('turdle-data-key'))
-  } else {
-    localStorage.setItem('turdle-data-key', JSON.stringify(localData))
-  }
-}
-
-
-
 
 
 
 function App() {
   const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    setUser(getStoredUserData())
+  }, [])
 
 
   const auth = getAuth()
@@ -134,11 +97,12 @@ function App() {
       
   }
 
-  function signInUser(email, password) {
+  async function signInUser(email, password) {
     signInWithEmailAndPassword(auth, email, password)
       .then((userCredential) => {
         console.log('successful log in')
         const user = userCredential.user;
+        getUserFromDatabase(user)
         setUser(user);
       })
       .catch(e => {
@@ -148,6 +112,7 @@ function App() {
   }
 
   function signOutUser() {
+    if (!user) return
     signOut(auth)
       .then(() => {
         setUser(null)
@@ -159,9 +124,63 @@ function App() {
       })
   }
 
-  // function getDataFromStorage() {
-  //   let data = JSON.parse(localStorage.getItem('turdle-data-key'));
-  // }
+  function initLocalStorageData() {
+    if (localStorage.getItem('turdle-data-key')) {
+      console.log('local key stored')
+      return
+    } else {
+      localStorage.setItem('turdle-data-key', JSON.stringify(dataTemplate))
+      localStorage.setItem('turdle-theme', JSON.stringify(false))
+    }
+  }
+
+  function getStoredUserData() {
+    let data = JSON.parse(localStorage.getItem('turdle-data-key'))
+    return data.user
+  }
+
+
+  function storeUserLocally(user) {
+    // user passed in is a docSnap from firebase DB
+    let localUser = user.playerInfo
+    localStorage.setItem('turdle-data-key', JSON.stringify(localUser))
+  }
+
+  async function getUserFromDatabase(user) {
+    const docRef = doc(getFirestore(), "users", user.email);
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+      console.log("Document data:", docSnap.data());
+      console.log('initializing local storage . . .')
+      storeUserLocally(docSnap.data())
+    } else {
+      console.log("No such document!");
+      return false
+    }
+  }
+
+  async function addUserToDatabase(user) {
+    const usersRef = collection(getFirestore(), "users");
+    await setDoc(doc(usersRef, user.email), {
+      email: user.email, 
+      timeCreated: user.metadata.creationTime,
+      uid: user.uid,
+      playerInfo: dataTemplate,
+    });
+  }
+  
+  async function updateUserData(user, data) {
+    const docRef = doc(getFirestore(), "users", user.email)
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+      setDoc(docRef, {someData: data}, {merge: true})
+      console.log("Document data:", docSnap.data());
+    } else {
+      console.log("Error: No such document!");
+      return false
+    }
+  }
+  
   
 
 
@@ -227,7 +246,7 @@ function App() {
     document.querySelector('#password').value = '';
     try {
       signIn.close();
-    } catch (e) {console.log(e)} 
+    } catch(e) {console.log(e)} 
     signIn.showModal();
     signIn.classList.add('show')
   }
@@ -236,7 +255,24 @@ function App() {
     const signIn = document.querySelector('.sign-in');
     signIn.classList.remove('show');
     setTimeout(() => {
-      signIn.close()
+      signIn.close();
+    }, 500)
+  }
+
+  function openDataWarning() {
+    const dataWarning = document.querySelector('.data-warning');
+    try {
+      dataWarning.close();
+    } catch(e) {console.log(e)};
+    dataWarning.showModal();
+    dataWarning.classList.add('show');
+  }
+
+  function closeDataWarning() {
+    const dataWarning = document.querySelector('.data-warning');
+    dataWarning.classList.remove('show');
+    setTimeout(() => {
+      dataWarning.close();
     }, 500)
   }
 
@@ -244,7 +280,9 @@ function App() {
   return (
     <ThemeProvider>
       <div 
-        onLoad={initLocalStorageData}
+        onLoad={() => {
+          initLocalStorageData()
+        }}
         className="app flex-grow flex flex-col justify-center items-center"
       >
         <Header 
@@ -255,9 +293,8 @@ function App() {
 
 
         <div>
-          {user ? <p>Hello {user.email}!</p> : null}
+          {/* {user ? <p>Hello {user.email}!</p> : null} */}
         </div>
-        <button onClick={() => updateUserData(user)}>TEST TEST TEST TEST</button>
 
 
 
@@ -277,10 +314,10 @@ function App() {
           closeSignIn={closeSignIn}
           signInUser={signInUser}
         />
-
-        {/* <button className="p-4 border-2 w-full"
-        onClick={() => {createUser('mike@outlook.com', '123456')}}>TEST ADD USER</button> */}
-
+        <DataWarning 
+          closeDataWarning={closeDataWarning}
+          setUser={setUser}
+        />
 
         {user
         ?
@@ -294,6 +331,7 @@ function App() {
             closeMenu={closeMenu}
             openSignUp={openSignUp}
             openSignIn={openSignIn}
+            openDataWarning={openDataWarning}
           />
         }
       </div>
