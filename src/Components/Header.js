@@ -15,18 +15,17 @@ export default function Header( { user, openMenu } ) {
   return (
     <header 
       style={styles}
-      className='w-full h-auto flex items-center justify-between'
+      className='w-full h-auto flex items-center'
     >
       {
         user 
         ? 
-        <div className='flex pl-2'>
-          <img src={logo} alt="logo" className='h-8 -rotate-12 mr-1 mt-3'/>
-          <h1 className='font-pen text-6xl'> Turdle </h1>
-        </div>
-        
+          <div className='flex pl-2'>
+            <img src={logo} alt="logo" className='h-8 -rotate-12 mr-1 mt-3 '/>
+            <h1 className='font-pen text-6xl'> Turdle </h1>
+          </div>
         : 
-        <div></div>
+          null
       }
       <MenuButton 
         openMenu={openMenu} 
