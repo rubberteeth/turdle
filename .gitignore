@@ -23,3 +23,10 @@ yarn-debug.log*
 yarn-error.log*
 
 firebaseConfig.js
+
+words.js
+maybeWords.js
+moreWords.js
+quality.js
+Words.js
+finalWords.js
