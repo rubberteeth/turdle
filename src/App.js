@@ -36,6 +36,9 @@ import DataWarning from "./Components/DataWarning";
 
 
 
+import { finalWordList } from "./Assets/Data/finalWords";
+
+
 
 const playerInfoTemplate = {
   gamesPlayed: 0,
@@ -57,16 +60,16 @@ const playerInfoTemplate = {
 
 const dataTemplate = {
   username: null, 
-  activeRow: null,
-  guessRow: {
+  activeRow: 0,
+  guesses: {
+    0: null,
     1: null,
     2: null,
     3: null,
     4: null,
     5: null,
-    6: null,
   },
-  gameData: playerInfoTemplate,
+  playerStatistics: playerInfoTemplate,
 }
 
 
@@ -74,9 +77,6 @@ const dataTemplate = {
 function App() {
   const [user, setUser] = useState(null);
 
-  useEffect(() => {
-    setUser(getStoredUserData())
-  }, [])
 
 
   const auth = getAuth()
@@ -86,9 +86,8 @@ function App() {
       .then((userCredential) => {
         const user = userCredential.user;
         alert('account successfully created!')
-        setUser(user)
+        setUser(email)
         addUserToDatabase(user)
-        closeSignUp();
       })
       .catch((e) => {
         console.log(e.code, e.message)
@@ -101,9 +100,9 @@ function App() {
     signInWithEmailAndPassword(auth, email, password)
       .then((userCredential) => {
         console.log('successful log in')
-        const user = userCredential.user;
-        getUserFromDatabase(user)
-        setUser(user);
+        // const user = userCredential.user;
+        getUserFromDatabase(email)
+        setUser(email);
       })
       .catch(e => {
         console.log(e.code, e.message)
@@ -124,64 +123,70 @@ function App() {
       })
   }
 
-  function initLocalStorageData() {
-    if (localStorage.getItem('turdle-data-key')) {
-      console.log('local key stored')
-      return
-    } else {
-      localStorage.setItem('turdle-data-key', JSON.stringify(dataTemplate))
-      localStorage.setItem('turdle-theme', JSON.stringify(false))
-    }
-  }
-
-  function getStoredUserData() {
-    let data = JSON.parse(localStorage.getItem('turdle-data-key'))
-    return data.user
-  }
-
-
-  function storeUserLocally(user) {
-    // user passed in is a docSnap from firebase DB
-    let localUser = user.playerInfo
-    localStorage.setItem('turdle-data-key', JSON.stringify(localUser))
-  }
-
-  async function getUserFromDatabase(user) {
-    const docRef = doc(getFirestore(), "users", user.email);
-    const docSnap = await getDoc(docRef);
-    if (docSnap.exists()) {
-      console.log("Document data:", docSnap.data());
-      console.log('initializing local storage . . .')
-      storeUserLocally(docSnap.data())
-    } else {
-      console.log("No such document!");
-      return false
-    }
-  }
 
   async function addUserToDatabase(user) {
     const usersRef = collection(getFirestore(), "users");
     await setDoc(doc(usersRef, user.email), {
       email: user.email, 
       timeCreated: user.metadata.creationTime,
-      uid: user.uid,
       playerInfo: dataTemplate,
+      uid: user.uid
     });
   }
+
+  // async function addWordsListToDatabase(list) {
+  //   const listRef = collection(getFirestore(), 'words');
+  //   await setDoc(doc(listRef, 'fullWordsList'), {
+  //     validWordsList: list
+  //   })
+  // }
+
+
+  function initLocalStorageData() {
+    if (localStorage.getItem('turdle-data-key')) {
+      return
+    } else {
+      localStorage.setItem('turdle-data-key', JSON.stringify(dataTemplate));
+      localStorage.setItem('turdle-theme', JSON.stringify(false));
+      console.log('local storage initialized');
+    }
+  }
+
+  function resetLocalStorage() {
+    localStorage.setItem('turdle-data-key', JSON.stringify(dataTemplate));
+    localStorage.setItem('turdle-theme', JSON.stringify(false));
+    console.log('local storage reset');
+  }
+
   
-  async function updateUserData(user, data) {
-    const docRef = doc(getFirestore(), "users", user.email)
+  async function getUserFromDatabase(email) {
+    const docRef = doc(getFirestore(), "users", email);
     const docSnap = await getDoc(docRef);
     if (docSnap.exists()) {
-      setDoc(docRef, {someData: data}, {merge: true})
       console.log("Document data:", docSnap.data());
+      storeUserDataLocally(docSnap.data())
     } else {
-      console.log("Error: No such document!");
+      console.log("No such document!");
       return false
     }
   }
+
+
+  function storeUserDataLocally(userData) {
+    // user passed in is a docSnap from firebase DB
+    let localUser = userData.playerInfo
+    console.log('storing user data locally. . . ')
+    localStorage.setItem('turdle-data-key', JSON.stringify(localUser))
+  }
+
+
+
+
   
-  
+
+
+
+
 
 
 
@@ -277,6 +282,13 @@ function App() {
   }
 
 
+
+
+
+
+
+
+
   return (
     <ThemeProvider>
       <div 
@@ -290,13 +302,11 @@ function App() {
           openMenu={openMenu}
         />
 
-
-
-        <div>
-          {/* {user ? <p>Hello {user.email}!</p> : null} */}
-        </div>
-
-
+        <button
+          onClick={() => {
+            resetLocalStorage()
+          }}
+        >TEST TEST TEST TEST</button>
 
         <Menu 
           signOutUser={signOutUser} 
