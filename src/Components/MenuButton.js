@@ -7,7 +7,7 @@ export default function MenuButton( { openMenu } ) {
     <img 
       src={hamburgerIcon} 
       alt='menu-icon' 
-      className='menu-icon h-16 cursor-pointer'
+      className='menu-icon h-16 cursor-pointer ml-auto'
       onClick={openMenu}
     />
   )
