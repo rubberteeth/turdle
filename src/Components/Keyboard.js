@@ -1,8 +1,5 @@
 import React from 'react'
 import backspace from '../Assets/Pictures/backspace.png'
-import { useTheme } from '../ThemeContext'
-
-
 
 export default function Keyboard( { 
   handleLetterInput,
@@ -10,16 +7,14 @@ export default function Keyboard( {
   handleBackspace
   } ) {
 
-  const darkTheme = useTheme()
-
   const keyStyles = {
-    backgroundColor: darkTheme ? 'rgb(75, 85, 99)' : 'rgb(220, 220, 220)'
+    backgroundColor: '#b1aeae'
   }
 
-  
-
   return (
-    <div className='keyboard w-screen flex flex-col gap-2 self-end items-center pb-2'>
+    <div 
+      className='keyboard w-screen flex flex-col gap-2 self-end items-center pb-2'
+    >
       <div className='row-1 flex gap-0.5'>
         <div style={keyStyles} className='letter q' onClick={(e) => {handleLetterInput(e.target.textContent)}}>Q</div>
         <div style={keyStyles} className='letter w' onClick={(e) => {handleLetterInput(e.target.textContent)}}>W</div>
