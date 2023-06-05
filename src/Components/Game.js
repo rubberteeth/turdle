@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { useTheme } from '../ThemeContext'
-import { collection, doc, getDoc, getDocs, getFirestore, query, where } from "firebase/firestore";  
+import { doc, getDoc, getFirestore } from "firebase/firestore";  
 
 
 import Keyboard from './Keyboard'
@@ -8,7 +8,7 @@ import Keyboard from './Keyboard'
 
 export default function Game( { closeMenu } ) {
 
-  const [dailyWord, setDailyWord] = useState('poser')
+  const [dailyWord, setDailyWord] = useState('')
   const [currentGuess, setCurrentGuess] = useState([])
   const [activeRow, setActiveRow] = useState(0)
 
@@ -18,32 +18,14 @@ export default function Game( { closeMenu } ) {
 
   const styles = {
     backgroundColor : darkTheme ? 'rgb(110 125 140)' : 'rgb(245, 245, 245)',
-    color: darkTheme ? '#eee' : '#111',
-  }
-
-  function fillStoredGuesses() {
-    let storage = JSON.parse(localStorage.getItem('turdle-data-key'));
-    const guessRows = storage.guesses
-    // if no stored guesses, return
-    if (guessRows[0] === null) return
-
-    for (let row in guessRows) {
-      // if all stored guesses filled in, return
-      if (guessRows[row] === null) return 
-      console.log('filling in row: ', row)
-      let index = 0
-      let guess = guessRows[row]
-      let currentGuessRow = document.querySelectorAll(`.guess-row-${row}>div`)
-      currentGuessRow.forEach(square => {
-        square.textContent = guess[index]
-        index++
-      })
-      animateRowsAndPaintKeys(row)
-    }
-    
+    color: darkTheme ? '#fefefe' : '#111',
   }
 
   useEffect(() => {
+    setDailyWord(() => {
+      return JSON.parse(localStorage.getItem('turdle-data-key')).dailyWord
+    })
+     
     // get locally stored active row
     let storage = JSON.parse(localStorage.getItem('turdle-data-key'));
     setActiveRow(storage.activeRow)
@@ -57,17 +39,33 @@ export default function Game( { closeMenu } ) {
     }    
     updateGuess()
   },[currentGuess, activeRow])
-    
 
+
+  function fillStoredGuesses() {
+    let storage = JSON.parse(localStorage.getItem('turdle-data-key'));
+    const guessRows = storage.guesses
+    // if no stored guesses, return
+    if (guessRows[0] === null) return
+    for (let row in guessRows) {
+      // if all stored guesses filled in, return
+      if (guessRows[row] === null) return 
+      console.log('filling in row: ', row)
+      let index = 0
+      let guess = guessRows[row]
+      let currentGuessRow = document.querySelectorAll(`.guess-row-${row}>div`)
+      currentGuessRow.forEach(square => {
+        square.textContent = guess[index]
+        index++
+      })
+      animateRowsAndPaintKeys(row)
+    }
+  }
 
   function incrementLocallyStoredActiveRow() {
     let storage = JSON.parse(localStorage.getItem('turdle-data-key'));
     storage.activeRow++;
     localStorage.setItem('turdle-data-key', JSON.stringify(storage))
   }
-
-  
-
 
 
   function handleBackspace() {
@@ -85,7 +83,7 @@ export default function Game( { closeMenu } ) {
   }
 
   async function guessIsInWordList() {
-    const wordsRef = doc(getFirestore(), 'words', 'list')
+    const wordsRef = doc(getFirestore(), 'words', 'fullWordsList')
     const wordsSnap = await getDoc(wordsRef);
     if (wordsSnap.exists()) {
         // return boolean of wether word is in valid words list
@@ -154,27 +152,46 @@ export default function Game( { closeMenu } ) {
 
 
   function animateRowsAndPaintKeys(row) {
-    let tempDailyWord = dailyWord.split('')
-    let timeDelay = 0;
-    // manual index of guess letter for loop
-    let guessLetterIndex = 0
+    // create copy of daily word to mutate
+    let tempDailyWord = dailyWord.toLowerCase().split('');
 
     let squares = document.querySelectorAll(`.guess-row-${row}>div`);
 
-    function encodeDailyWord() {
-      // use 0s and 1s to cleanly paint key without having to worry about 
-      // repeating letters and special cases ( 1 for correct position and
-      // 0 for correct letter but wrong position)
-      let count = 0;
-      squares.forEach(square => {
-        if (tempDailyWord[count] === square.textContent.toLowerCase()) {
-          tempDailyWord[count] = 1;
-        }
-        count++
-      })
-    }
-    encodeDailyWord()
+    // make a guess variable to 'encode' for each row to show the correct number of green
+    // and yellow squares and in the correct positions
+    let guess = [];
+    squares.forEach(square => guess.push(square.textContent.toLowerCase()))
 
+    
+    // place 0s and 1s in for correct letters so correct letters get removed,
+    // that way I can use 0s to paint the correct letters green (right letter right spot) without having 
+    // the same letter in a previous position painted yellow (right letter wrong spot) unless it should be.
+    // and use 1s to paint yellow without having to worry about multiple yellows (right letter wrong spot)
+    // when there should only be one yellow.
+    function encodeGuess() {
+      // handle correct letters first and remove (change to 0s)
+      for (let i = 0; i < 5; i++) {
+        if (guess[i] === tempDailyWord[i]) {
+          guess[i] = 0;
+          tempDailyWord[i] = 0;
+        }
+      }
+      for (let i = 0; i < 5; i++) {
+        // handle right letter wrong position cases (exclude 0s for correct letters)
+        if (guess[i] !== 0 && tempDailyWord.indexOf(guess[i]) !== -1) {
+          tempDailyWord[tempDailyWord.indexOf(guess[i])] = 1
+          guess[i] = 1;
+        }
+      }
+    }
+    encodeGuess()
+
+      // use variable for delay to 'chain' animations
+    let timeDelay = 0;
+      // manual index of guess letter for loop
+    let guessLetterIndex = 0
+
+    // square animations begin here
     squares.forEach(square => {
       // rotate square out of view (y-axis 90 degrees)
       setTimeout(() => {
@@ -185,22 +202,23 @@ export default function Game( { closeMenu } ) {
       setTimeout(() => {
         // paint each squares background based on status of letter;
         // then paint key on keyboard as well
-
-        if (tempDailyWord[guessLetterIndex] === 1) {
-          // letter is in the correct position
+        switch(guess[guessLetterIndex]) {
+          case 0: 
+            // letter is in the correct position
             square.classList.add('bg-green-600')
             paintKey(square.textContent, 'rgb(5, 150, 105)')
+            break
+          case 1:
+            // letter is in the word in the wrong position
+            square.classList.add('bg-yellow-400')
+            paintKey(square.textContent, 'rgb(251, 191, 36)')
+            break
+          default :
+            // letter isn't in the word
+            square.classList.add('bg-zinc-500');
+            paintKey(square.textContent, 'rgb(113, 113, 122)')
+            break
         }
-          // letter is in the word but in the wrong position
-        else if (tempDailyWord.indexOf(square.textContent.toLowerCase()) === -1) {
-            square.classList.add('bg-yellow-700');
-            paintKey(square.textContent, 'rgb(180, 83, 9)')
-        } else {
-            square.classList.add('bg-yellow-300')
-            paintKey(square.textContent, 'rgb(252, 211, 77)')
-        }
-
-
       // add 400ms so square is out of view before paint
       }, timeDelay + 400);
       
@@ -232,23 +250,14 @@ export default function Game( { closeMenu } ) {
       guess.push(square.textContent);
     })
 
-    // store guess attempt locally
+    // store guess attempt to copy
     storage.guesses[activeRow] = guess;
 
     //store updated data locally
     localStorage.setItem('turdle-data-key', JSON.stringify(storage))
   }
 
-  // function fillStoredGuesses() {
-  //   let storage = JSON.parse(localStorage.getItem('turdle-data-key'));
-  //   const guessRows = storage.guessRow
-  //   if (guessRows[0] === null) return
-  //   for (let row in guessRows) {
-  //     if (guessRows[row] === null) return 
-  //     console.log(row);
-  //   }
-  // }
-
+  
 
   return (
     <div
@@ -257,7 +266,6 @@ export default function Game( { closeMenu } ) {
     onLoad={fillStoredGuesses}
     onClick={closeMenu}
     >
-      <button className='border-2 p-4 ' onClick={storeGuess}>TEST</button>
       <div 
         className="word-warning w-auto bg-red-50 border border-black rounded-md p-2 
         absolute mx-auto left-0 right-0 text-center w-max -mt-2 z-10 invisible"
