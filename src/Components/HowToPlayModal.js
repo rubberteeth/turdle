@@ -11,7 +11,7 @@ export default function HowToPlayModal( { closeHowTo } ) {
   }
 
   const darkDialog = {
-    backgroundColor: darkTheme ? 'rgb(31, 41, 55)' : 'rgb(250, 250, 200)'
+    backgroundColor: darkTheme ? 'rgb(31, 41, 55)' : 'rgb(225, 240, 255)'
   }
 
   function showPageTwoOfHowTo() {
@@ -30,8 +30,13 @@ export default function HowToPlayModal( { closeHowTo } ) {
         className='page-1 text-center text-2xl bg-green-50 rounded-xl 
         shadow-lg border-4 border-gray-800 w-full p-8'
       >
-        <p className='font-bold'>
-          You have 6 chances to guess the 5 letter word, your goal is to guess the word in the least amount of tries.
+        <p className='font-bold text-3xl py-8'>
+          You have 6 chances to guess the 5 letter word, 
+          your goal is to guess the word in the least amount of tries.
+          <br/>
+          <br/>
+          You will receive a warning for invalid guesses
+
         </p>
         <button 
           className='text-md w-4/6 mt-8 mb-4 rounded-lg border-2 bg-green-600 border-gray-800 
@@ -46,20 +51,20 @@ export default function HowToPlayModal( { closeHowTo } ) {
         className='page-2 text-center text-2xl bg-green-50 rounded-xl p-8
         shadow-lg border-4 border-gray-800'
       >
-        <p className='mb-2 text-md font-bold'>
+        <p className='py-4 text-3xl font-bold'>
           Letter backgrounds in game will change color depending on their state:
         </p>
         <ul 
           style={darkDialog}
-          className='flex flex-col gap-4 mt-8 mb-8 shadow-lg border-2
-          border-green-400 py-6 px-2 rounded-md font-bold'
+          className='flex flex-col gap-6 mt-8 mb-8 shadow-lg border-2
+          border-zinc-400 py-6 px-4 rounded-md font-bold'
         >
           <li className='flex gap-2 items-center text-left'>
-            <div className='h-8 w-8 bg-yellow-700'></div>
+            <div className='h-8 w-8 bg-zinc-500'></div>
             <p>Letter is <em>not</em> in the word</p>
           </li>
           <li className='flex gap-2 items-center text-left'>
-            <div className='h-8 w-8 bg-yellow-300 flex-shrink-0'></div>
+            <div className='h-8 w-8 bg-yellow-400 flex-shrink-0'></div>
             <p>Letter is in the word, <em>but in the wrong position</em></p>
           </li>
           <li className='flex gap-2 items-center text-left'>
