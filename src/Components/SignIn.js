@@ -42,6 +42,8 @@ export default function SignIn( { closeSignIn, signInUser } ) {
     }
     signInUser(emailRef.current.value, passwordRef.current.value)
     closeSignIn()
+    warningRef.current.className = '';
+    warningRef.current.textContent = '';
   }
 
   return (
@@ -99,7 +101,7 @@ export default function SignIn( { closeSignIn, signInUser } ) {
             pt-2 pb-2 font-bold text-gray-50 hover:text-green-600 hover:bg-gray-50'
           >
               Sign In!
-          </button>
+          </button> 
         </form>
         <button
           onClick={() => {

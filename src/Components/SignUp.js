@@ -40,25 +40,25 @@ export default function SignUp( { closeSignUp, createUser } ) {
       return
     }
     createUser(emailRef.current.value, passwordRef.current.value)
+    warningRef.current.className = '';
+    warningRef.current.textContent = '';
+    closeSignUp()
   }
 
   return (
     <dialog 
-        style={styles}
-        className='sign-up font-quicksand text-center text-2xl bg-green-50 rounded-xl 
-        shadow-lg border-4 border-gray-800 w-full p-8 h-max'
+      style={styles}
+      className='sign-up font-quicksand text-center text-2xl bg-green-50 rounded-xl 
+      shadow-lg border-4 border-gray-800 w-full p-8 h-max'
       >
         <p className='font-bold text-3xl pb-4'>Create New Account</p>
         <p ref={warningRef}></p>
         <form action="#">
           <label 
-            
             htmlFor="sign-up-email"
             className='flex flex-col items-start gap-4 my-4 font-bold'
           >
-            
             Email:
-
             <input 
               onChange={emailInputChange}
               ref={emailRef}
@@ -100,11 +100,6 @@ export default function SignUp( { closeSignUp, createUser } ) {
           </button>
         </form>
         <button
-          onClick={() => {
-            warningRef.current.className = '';
-            warningRef.current.textContent = '';
-            closeSignUp()
-          }}
           className='text-md w-4/6 mt-2 mb-4 rounded-lg border-2 bg-slate-400 border-gray-800 
           pt-2 pb-2 font-bold text-gray-50 hover:text-slate-400 hover:bg-gray-50'
         >
