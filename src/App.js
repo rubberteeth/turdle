@@ -61,6 +61,7 @@ const playerInfoTemplate = {
 const dataTemplate = {
   username: null, 
   activeRow: 0,
+  dailyWord: null,
   guesses: {
     0: null,
     1: null,
@@ -77,6 +78,8 @@ const dataTemplate = {
 function App() {
   const [user, setUser] = useState(null);
 
+
+// ----- User functions 
 
 
   const auth = getAuth()
@@ -134,31 +137,6 @@ function App() {
     });
   }
 
-  // async function addWordsListToDatabase(list) {
-  //   const listRef = collection(getFirestore(), 'words');
-  //   await setDoc(doc(listRef, 'fullWordsList'), {
-  //     validWordsList: list
-  //   })
-  // }
-
-
-  function initLocalStorageData() {
-    if (localStorage.getItem('turdle-data-key')) {
-      return
-    } else {
-      localStorage.setItem('turdle-data-key', JSON.stringify(dataTemplate));
-      localStorage.setItem('turdle-theme', JSON.stringify(false));
-      console.log('local storage initialized');
-    }
-  }
-
-  function resetLocalStorage() {
-    localStorage.setItem('turdle-data-key', JSON.stringify(dataTemplate));
-    localStorage.setItem('turdle-theme', JSON.stringify(false));
-    console.log('local storage reset');
-  }
-
-  
   async function getUserFromDatabase(email) {
     const docRef = doc(getFirestore(), "users", email);
     const docSnap = await getDoc(docRef);
@@ -171,6 +149,42 @@ function App() {
     }
   }
 
+
+
+
+//  ----- Local storage and data functions
+
+  
+
+
+
+  function initLocalStorageData() {
+    if (localStorage.getItem('turdle-data-key')) {
+      return
+    } else {
+      localStorage.setItem('turdle-data-key', JSON.stringify(dataTemplate));
+      localStorage.setItem('turdle-theme', JSON.stringify(false));
+      console.log('local storage initialized');
+    }
+  }
+
+  function setLocalStorage(data) {
+    localStorage.setItem('turdle-data-key', JSON.stringify(data));
+  }
+
+  
+
+  async function storeDailyWordLocally() {
+    let storage = JSON.parse(localStorage.getItem('turdle-data-key'));
+
+    async function getDailyWordFromDB() {
+      const word = doc(getFirestore(), 'words', 'dailyWord');
+      const wordSnap = await getDoc(word);
+      return await wordSnap.data().word
+    }
+    storage.dailyWord = await getDailyWordFromDB();
+    setLocalStorage(storage)
+  }
 
   function storeUserDataLocally(userData) {
     // user passed in is a docSnap from firebase DB
@@ -287,13 +301,94 @@ function App() {
 
 
 
+// ------ GAME FUNCTIONS
+
+
+// return boolean comparing if today's date matches daily word's date on DB
+async function isNewDay() {
+  let today = new Date().toString().split(' ').slice(1, 4).join(' ');
+  const dailyWordRef = doc(getFirestore(), 'words', 'dailyWord');
+  const dialyWordSnap = await getDoc(dailyWordRef);
+  const storedDate = dialyWordSnap.data().day;
+  if (storedDate === today) return false
+  return true
+}
+
+
+async function setWord() {
+  // if day hasn't changed, return from function
+  if (await isNewDay() !== true) return 
+  // reference to entire words list document;
+  const fullWordsListRef = doc(getFirestore(), 'words', 'fullWordsList')
+  const fullWordsListSnap = await getDoc(fullWordsListRef);
+
+  // use length of valid words list to choose a random word
+  let wordsListLength = fullWordsListSnap.data().validWordsList.length
+
+  // ste random word to a variable
+  let randomWord = fullWordsListSnap.data().validWordsList[Math.floor(Math.random() * wordsListLength)]
+
+  // reference to 'words' collection on db
+  const wordsRef = collection(getFirestore(), 'words');
+
+  // reference to used words document on db
+  const usedWordsRef = doc(getFirestore(), 'words', 'usedWordsList');
+  // snapshot of used words data
+  const usedWordsSnap = await getDoc(usedWordsRef);
+  // copy of used words array from db 
+  const usedWords = usedWordsSnap.data().usedWords
+
+  // if word in used words list, pick a new word, debated on removing words from words list altogether 
+  // but decided to use a separate array to keep track of used words.
+  while (usedWords.indexOf(randomWord) !== -1) {
+    randomWord = fullWordsListSnap.data().validWordsList[Math.floor(Math.random() * wordsListLength)]
+  }
+
+  // create/update random word document using randomWord variable
+  await setDoc(doc(wordsRef, 'dailyWord'), {
+    // split new date into day/month/year,  example : 'Jan 01 2023'
+    day: new Date().toString().split(' ').slice(1, 4).join(' '),
+    // choose random word to set to DB
+    word: randomWord
+  })
+  
+  // create/update used words list on DB so words don't get used twice
+  await setDoc(doc(wordsRef, 'usedWordsList'), {
+    usedWords: [...usedWords, randomWord]
+  })
+}
+
+
+//  --- temp functions 
+
+
+
+  async function addWordsListToDatabase(list) {
+    const wordsRef = collection(getFirestore(), 'words');
+    await setDoc(doc(wordsRef, 'fullWordsList'), {
+      validWordsList: list
+    })
+  }
+
+
+
+
+
+
+
+
+
+
+
 
 
   return (
     <ThemeProvider>
       <div 
         onLoad={() => {
+          setWord()
           initLocalStorageData()
+          storeDailyWordLocally()
         }}
         className="app flex-grow flex flex-col justify-center items-center"
       >
@@ -304,9 +399,9 @@ function App() {
 
         <button
           onClick={() => {
-            resetLocalStorage()
+            // storeDailyWordLocally()
           }}
-        >TEST TEST TEST TEST</button>
+        ></button>
 
         <Menu 
           signOutUser={signOutUser} 
