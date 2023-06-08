@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react'
 import { useTheme } from '../ThemeContext'
-import { doc, getDoc, getFirestore } from "firebase/firestore";  
+import { collection, doc, getDoc, getFirestore, setDoc } from "firebase/firestore";  
 
 
 import Keyboard from './Keyboard'
 
-function getStorage() {
-  return JSON.parse(localStorage.getItem('turdle-data-key'))
+function getStorage(key) {
+  return JSON.parse(localStorage.getItem(key))
 }
 
 
@@ -24,7 +24,9 @@ export default function Game( { closeMenu, user } ) {
     color: darkTheme ? '#fefefe' : '#111',
   }
 
+  
   useEffect(() => {
+
     function updateGuess() {
       // fill in corresponding row with current guess each time guess changes
       let guessRow = document.querySelectorAll(`.guess-row-${activeRow}>div`);
@@ -33,19 +35,30 @@ export default function Game( { closeMenu, user } ) {
       }
     }  
     // check game is still being played
-    if (activeRow < 6) updateGuess()
-  },[currentGuess, activeRow, ])
+    if (activeRow < 6 && !gameCompleted()) updateGuess()
+  },[currentGuess, activeRow])
+
+  useEffect(() => {
+    async function getActiveRow() {
+      if (user === 'guest') return 
+      const docRef = doc(getFirestore(), "users", user);
+      const docSnap = await getDoc(docRef);
+      setActiveRow(await docSnap.data().info.activeRow)
+    }
+    getActiveRow()
+  }, [user])
+
+  
 
 
   async function fillStoredGuesses() {
     let guesses;
-    if (user === 'guest') guesses = getStorage().guesses
+    if (user === 'guest') guesses = getStorage('turdle-data-key').guesses
     else {
       const docRef = doc(getFirestore(), "users", user);
       const docSnap = await getDoc(docRef);
       guesses = docSnap.data().info.guesses
     }
-
 
     // if no stored guesses, return
     if (guesses[0] === null) return
@@ -59,7 +72,6 @@ export default function Game( { closeMenu, user } ) {
         square.textContent = guess[index]
         index++
       })
-      console.log(guess)
       animateRowsAndPaintKeys(row)
     }
   }
@@ -103,6 +115,19 @@ export default function Game( { closeMenu, user } ) {
     }, 750);
   }
 
+  function gameCompleted() {
+    let dailyWord = getStorage('turdle-daily-word').toLowerCase();
+    let guesses = getStorage('turdle-data-key').guesses;
+    let activeRow = getStorage('turdle-data-key').activeRow;
+
+    // check guess is stored for current guess row
+    if (guesses[activeRow] !== null) {
+      // return true if latest stored guess === daily word
+      if (guesses[activeRow].join('').toLowerCase() === dailyWord) return true
+    }
+    return false
+  }
+
   async function handleGuess() {
     // game is finished
     if (activeRow === 6) return
@@ -113,8 +138,18 @@ export default function Game( { closeMenu, user } ) {
 
     // guess is correct show stats and end game loop
     if (lowerCaseGuess() === getDailyWordFromStorage().toLowerCase()) {
+      
+      if (gameCompleted()) return 
+      
       storeGuessLocally()
       animateRowsAndPaintKeys(activeRow)
+
+
+
+      storeCompletedGameStatistics()
+
+
+
       // set some sort of game win state that will use todays date ,
       // so that it wont re animate every time you click enter but will 
       // not affect the next day's game 
@@ -136,17 +171,19 @@ export default function Game( { closeMenu, user } ) {
       return
     }
     
-    
-    
-
-    // full word, not correct word, and guess is in word list
-    if (activeRow < 6) {
-      storeGuessLocally()
-      incrementLocallyStoredActiveRow()
-      setActiveRow(prev => prev + 1)
-      animateRowsAndPaintKeys(activeRow);
-      setCurrentGuess([])
+    // all guesses used
+    if (activeRow === 6) {
+      storeCompletedGameStatistics()
+      return
     }
+
+    // at this point guess is valid and game hasn't been won
+    storeGuessLocally()
+    incrementLocallyStoredActiveRow()
+    storeGuessesOnDB()
+    setActiveRow(prev => prev + 1)
+    animateRowsAndPaintKeys(activeRow);
+    setCurrentGuess([])
     
   }
 
@@ -258,7 +295,7 @@ export default function Game( { closeMenu, user } ) {
 
   function storeGuessLocally() {
     // make local storage copy
-    let storage = getStorage();
+    let storage = getStorage('turdle-data-key');
     // store guess attempt in array
     let guess = []
     document.querySelectorAll(`.guess-row-${activeRow}>div`).forEach(square => {
@@ -272,15 +309,15 @@ export default function Game( { closeMenu, user } ) {
 
 
   function incrementLocallyStoredActiveRow() {
-    let storage = getStorage();
+    let storage = getStorage('turdle-data-key');
     storage.activeRow++;
     localStorage.setItem('turdle-data-key', JSON.stringify(storage))
   }
 
 
   
-  function storeCompletedGameStatistics() {
-    let storage = getStorage();
+  async function storeCompletedGameStatistics() {
+    let storage = getStorage('turdle-data-key');
     let stats = storage.playerStatistics;
 
     // increment games played
@@ -298,7 +335,6 @@ export default function Game( { closeMenu, user } ) {
       let lastDay = new Date(stats.lastGamePlayed).getUTCDay();
       let today = new Date().getUTCDay();
       // check days are also within 48 hours
-      console.log(today)
       if (lastDay + 1 === today || (lastDay === 6 && today === 0)) {
           // 172_800_000 ms === 48 hours
         if (new Date().getTime() - new Date(stats.lastGamePlayed).getTime() < 172_800_000) {
@@ -357,13 +393,29 @@ export default function Game( { closeMenu, user } ) {
     if (stats.currentStreak > stats.maxStreak 
       || stats.maxStreak === null) stats.maxStreak = stats.currentStreak;
 
-    
-
-    
-    console.log(storage)
+    //update user data on db
+    if (user !== 'guest') {
+      const usersRef = collection(getFirestore(), "users");
+      await setDoc(doc(usersRef, user), {
+        info: storage
+      });
+    }
+      
+    //update user data in local storage
     localStorage.setItem('turdle-data-key', JSON.stringify(storage))
   }
 
+
+  async function storeGuessesOnDB() {
+    if (user !== 'guest') {
+      const usersRef = collection(getFirestore(), "users");
+      await setDoc(doc(usersRef, user), {
+        info: getStorage('turdle-data-key')
+      }, {merge: true});
+    }
+  }
+
+  
   
 
   return (
@@ -371,16 +423,10 @@ export default function Game( { closeMenu, user } ) {
     className='game w-screen flex-grow flex flex-col'
     style={styles}
     onLoad={() => {
-      let storage = getStorage();
-       
-      // get locally stored active row
-      setActiveRow(storage.activeRow)
-
       fillStoredGuesses()
     }}
     onClick={closeMenu}
     >
-      <button className='p-4 border-2' onClick={storeCompletedGameStatistics}>TEST</button>
       <div 
         className="word-warning w-auto bg-red-50 border border-black rounded-md p-2 
         absolute mx-auto left-0 right-0 text-center w-max -mt-2 z-10 invisible"
