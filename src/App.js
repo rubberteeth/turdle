@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import './index.css';
 import { ThemeProvider } from "./ThemeContext";
 
-
 import WelcomePage from "./Components/WelcomePage";
 import Menu from "./Components/Menu";
 import Game from "./Components/Game";
@@ -10,6 +9,8 @@ import HowToPlayModal from "./Components/HowToPlayModal";
 import Header from "./Components/Header";
 import SignUp from "./Components/SignUp";
 import SignIn from "./Components/SignIn";
+import DataWarning from "./Components/GuestDataWarning";
+
 
 import { firebaseConfig } from "./firebaseConfig";
 import { initializeApp } from 'firebase/app'
@@ -28,7 +29,7 @@ import {
   signInWithEmailAndPassword,
   signOut
 } from "firebase/auth";
-import DataWarning from "./Components/DataWarning";
+
 
 
 
@@ -208,9 +209,9 @@ function App() {
   }
 
 
-  async function storeDailyWordLocally() {
-    let dailyWord = await getDailyWordFromDB();
-    localStorage.setItem('turdle-daily-word', JSON.stringify(dailyWord));
+  async function storeDailyWordLocally(word) {
+    if (word) localStorage.setItem('turdle-daily-word', JSON.stringify(word))
+    localStorage.setItem('turdle-daily-word', JSON.stringify(await getDailyWordFromDB()));
   }
 
   
@@ -359,7 +360,7 @@ function App() {
       randomWord = fullWordsListSnap.data().validWordsList[Math.floor(Math.random() * wordsListLength)]
     }
 
-    // create/update random word document using randomWord variable
+    // create/update 'daily word' document using randomWord variable
     await setDoc(doc(wordsRef, 'dailyWord'), {
       // split new date into day/month/year,  example : 'Jan 01 2023'
       day: new Date().toString().split(' ').slice(1, 4).join(' '),
@@ -367,12 +368,12 @@ function App() {
       word: randomWord
     })
 
-    
-    
     // create/update used words list on DB so words don't get used twice
     await setDoc(doc(wordsRef, 'usedWordsList'), {
       usedWords: [...usedWords, randomWord]
     })
+
+    storeDailyWordLocally(randomWord)
   }
 
   function resetGameData() {
@@ -450,6 +451,7 @@ function App() {
           signInUser={signInUser}
         />
         <DataWarning 
+          resetGameData={resetGameData}
           closeDataWarning={closeDataWarning}
           setUser={setUser}
         />
@@ -457,8 +459,8 @@ function App() {
         {user
         ? 
           <Game 
+            user={user}
             closeMenu={closeMenu}
-            getStorage={getStorage}
           />
         :
           <WelcomePage 
