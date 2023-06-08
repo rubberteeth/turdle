@@ -111,12 +111,10 @@ function App() {
 
   async function signInUser(email, password) {
     signInWithEmailAndPassword(auth, email, password)
-      .then((userCredential) => {
+      .then(() => {
         console.log('successful log in')
-        // const user = userCredential.user;
         getUserFromDatabaseToStoreLocally(email)
         setUser(email);
-        setUsername(email)
       })
       .catch(e => {
         console.log(e.code, e.message)
@@ -131,6 +129,7 @@ function App() {
       .then(() => {
         setUser(null)
         setUsername(null)
+        resetGameData()
         alert('you have been signed out')
       })
       .catch((e) => {
@@ -142,6 +141,7 @@ function App() {
 
   async function addUserToDatabase(user) {
     const usersRef = collection(getFirestore(), "users");
+    dataTemplate.username = user.email
     await setDoc(doc(usersRef, user.email), {
       username: user.email, 
       timeCreated: user.metadata.creationTime,
@@ -154,9 +154,7 @@ function App() {
     const docRef = doc(getFirestore(), "users", email);
     const docSnap = await getDoc(docRef);
     if (docSnap.exists()) {
-      console.log('User data updated')
-      setLocalStorage(docSnap.data().info)
-      setUsername(docSnap.data().username)
+      setLocalStorage('turdle-data-key', docSnap.data().info)
     } else {
       console.log("No such document!");
       return false
@@ -174,21 +172,21 @@ function App() {
     return JSON.parse(localStorage.getItem(key))
   }
 
-  function setLocalStorage(data) {
-    localStorage.setItem('turdle-data-key', JSON.stringify(data));
+  function setLocalStorage(key, data) {
+    localStorage.setItem(key, JSON.stringify(data));
   }
 
   function setUsername(username) {
     let storage = getStorage('turdle-data-key');
     storage.username = username;
-    setLocalStorage(storage);
+    setLocalStorage('turdle-data-key', storage);
   }
 
-  function initLocalStorageData(user) {
+  function initLocalStorageData() {
     if (localStorage.getItem('turdle-data-key')) {
       return
     } else {
-      setLocalStorage(dataTemplate)
+      setLocalStorage('turdle-data-key', dataTemplate)
       localStorage.setItem('turdle-theme', JSON.stringify(false));
       console.log('local storage initialized');
     }
@@ -210,7 +208,10 @@ function App() {
 
 
   async function storeDailyWordLocally(word) {
-    if (word) localStorage.setItem('turdle-daily-word', JSON.stringify(word))
+    if (word) {
+      localStorage.setItem('turdle-daily-word', JSON.stringify(word)) 
+      return
+    } 
     localStorage.setItem('turdle-daily-word', JSON.stringify(await getDailyWordFromDB()));
   }
 
@@ -380,7 +381,7 @@ function App() {
     let storage = getStorage('turdle-data-key');
     storage.activeRow = 0;
     storage.guesses = guessesTemplate;
-    setLocalStorage(storage)
+    setLocalStorage('turdle-data-key', storage)
   }
 
 
@@ -425,13 +426,13 @@ function App() {
           openMenu={openMenu}
         />
 
-        <button
+        {/* <button
           onClick={() => {
             let storage = getStorage('turdle-data-key');
             storage.hello = 'world';
-            setLocalStorage(storage)
+            setLocalStorage('turdle-data-key', storage)
           }}
-        ></button>
+        ></button> */}
 
         <Menu 
           user={user}
