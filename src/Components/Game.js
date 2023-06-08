@@ -8,7 +8,6 @@ import Keyboard from './Keyboard'
 
 export default function Game( { closeMenu } ) {
 
-  const [dailyWord, setDailyWord] = useState('')
   const [currentGuess, setCurrentGuess] = useState([])
   const [activeRow, setActiveRow] = useState(0)
 
@@ -22,49 +21,35 @@ export default function Game( { closeMenu } ) {
   }
 
   useEffect(() => {
-    setDailyWord(() => {
-      return JSON.parse(localStorage.getItem('turdle-data-key')).dailyWord
-    })
-     
-    // get locally stored active row
-    let storage = JSON.parse(localStorage.getItem('turdle-data-key'));
-    setActiveRow(storage.activeRow)
-
     function updateGuess() {
       // fill in corresponding row with current guess each time guess changes
       let guessRow = document.querySelectorAll(`.guess-row-${activeRow}>div`);
       for (let i = 0; i < 5; i++) {
         guessRow[i].textContent = currentGuess[i]
       }
-    }    
-    updateGuess()
+    }  
+    // check game is still being played
+    if (activeRow < 6) updateGuess()
   },[currentGuess, activeRow])
 
 
   function fillStoredGuesses() {
-    let storage = JSON.parse(localStorage.getItem('turdle-data-key'));
-    const guessRows = storage.guesses
+    const guesses = JSON.parse(localStorage.getItem('turdle-data-key')).guesses;
     // if no stored guesses, return
-    if (guessRows[0] === null) return
-    for (let row in guessRows) {
+    if (guesses[0] === null) return
+    for (let row in guesses) {
       // if all stored guesses filled in, return
-      if (guessRows[row] === null) return 
-      console.log('filling in row: ', row)
+      if (guesses[row] === null) return 
       let index = 0
-      let guess = guessRows[row]
+      let guess = guesses[row]
       let currentGuessRow = document.querySelectorAll(`.guess-row-${row}>div`)
       currentGuessRow.forEach(square => {
         square.textContent = guess[index]
         index++
       })
+      console.log(guess)
       animateRowsAndPaintKeys(row)
     }
-  }
-
-  function incrementLocallyStoredActiveRow() {
-    let storage = JSON.parse(localStorage.getItem('turdle-data-key'));
-    storage.activeRow++;
-    localStorage.setItem('turdle-data-key', JSON.stringify(storage))
   }
 
 
@@ -103,17 +88,20 @@ export default function Game( { closeMenu } ) {
     document.querySelector('.word-warning').classList.remove('invisible');
     setTimeout(() => {
       document.querySelector('.word-warning').classList.add('invisible');
-    }, 700);
+    }, 750);
   }
 
   async function handleGuess() {
-    // if not a full word return
+    // game is finished
+    if (activeRow === 6) return
+
+    // not a full word
     if (currentGuess.length !== 5) return
 
 
-    // if guess is correct show stats and end game loop
-    if (lowerCaseGuess() === dailyWord.toLowerCase()) {
-      storeGuess()
+    // guess is correct show stats and end game loop
+    if (lowerCaseGuess() === getDailyWordFromStorage().toLowerCase()) {
+      storeGuessLocally()
       animateRowsAndPaintKeys(activeRow)
       // set some sort of game win state that will use todays date ,
       // so that it wont re animate every time you click enter but will 
@@ -129,7 +117,7 @@ export default function Game( { closeMenu } ) {
       return
     }
     
-    // if guess isn't in word list
+    // guess isn't in word list
     if (await guessIsInWordList() === false) {
       animateWrongGuess()
       showNotValidWordWarning()
@@ -139,21 +127,22 @@ export default function Game( { closeMenu } ) {
     
     
 
-    // if full word, not correct word, and guess is in word list
-    if (activeRow < 5) {
-      storeGuess()
-      animateRowsAndPaintKeys(activeRow);
-      setCurrentGuess([])
+    // full word, not correct word, and guess is in word list
+    if (activeRow < 6) {
+      storeGuessLocally()
       incrementLocallyStoredActiveRow()
       setActiveRow(prev => prev + 1)
+      animateRowsAndPaintKeys(activeRow);
+      setCurrentGuess([])
     }
     
   }
 
 
   function animateRowsAndPaintKeys(row) {
+    
     // create copy of daily word to mutate
-    let tempDailyWord = dailyWord.toLowerCase().split('');
+    let tempDailyWord = getDailyWordFromStorage().toLowerCase().split('');
 
     let squares = document.querySelectorAll(`.guess-row-${row}>div`);
 
@@ -188,18 +177,21 @@ export default function Game( { closeMenu } ) {
 
       // use variable for delay to 'chain' animations
     let timeDelay = 0;
+
       // manual index of guess letter for loop
     let guessLetterIndex = 0
 
     // square animations begin here
     squares.forEach(square => {
+      
       // rotate square out of view (y-axis 90 degrees)
       setTimeout(() => {
         square.classList.toggle('rotate-y');
       }, timeDelay);
-      
+
       // paint square based on letter
       setTimeout(() => {
+        
         // paint each squares background based on status of letter;
         // then paint key on keyboard as well
         switch(guess[guessLetterIndex]) {
@@ -219,6 +211,7 @@ export default function Game( { closeMenu } ) {
             paintKey(square.textContent, 'rgb(113, 113, 122)')
             break
         }
+
       // add 400ms so square is out of view before paint
       }, timeDelay + 400);
       
@@ -232,7 +225,6 @@ export default function Game( { closeMenu } ) {
       // previous square is rotating back into view
       timeDelay+= 400
     })
-
   }
 
   function paintKey(letter, style) {
@@ -240,20 +232,117 @@ export default function Game( { closeMenu } ) {
     key.style.backgroundColor = style;
   }
 
-  function storeGuess() {
+
+
+
+
+
+
+  // storage related functions ----------
+
+  function getDailyWordFromStorage() {
+    return JSON.parse(localStorage.getItem('turdle-daily-word'));
+  }
+
+  function storeGuessLocally() {
     // make local storage copy
     let storage = JSON.parse(localStorage.getItem('turdle-data-key'));
-
     // store guess attempt in array
     let guess = []
-    document.querySelectorAll(`.guess-row-${activeRow}>div`).forEach(square =>{
+    document.querySelectorAll(`.guess-row-${activeRow}>div`).forEach(square => {
       guess.push(square.textContent);
     })
-
     // store guess attempt to copy
     storage.guesses[activeRow] = guess;
-
     //store updated data locally
+    localStorage.setItem('turdle-data-key', JSON.stringify(storage))
+  }
+
+
+  function incrementLocallyStoredActiveRow() {
+    let storage = JSON.parse(localStorage.getItem('turdle-data-key'));
+    storage.activeRow++;
+    localStorage.setItem('turdle-data-key', JSON.stringify(storage))
+  }
+
+
+
+  function storeCompletedGameStatistics() {
+    let storage = JSON.parse(localStorage.getItem('turdle-data-key'));
+    let stats = storage.playerStatistics;
+
+    // increment games played
+    stats.gamesPlayed += 1;
+
+ 
+    if (storage.guesses[5] !== null 
+      && storage.guesses[5].join('').toLowerCase() !== getDailyWordFromStorage().toLowerCase()) {
+      stats.incomplete += 1
+    }
+    
+
+    // determine streak based on previous date
+    function streak() {
+      if (stats.lastGamePlayed === null) return false;
+      let lastDay = new Date(stats.lastGamePlayed).getUTCDay();
+      let today = new Date().getUTCDay();
+      if (lastDay +1 === today || (lastDay === 6 && today === 0)) {
+          // 172_800_000 === 48 hours
+        if (new Date().getTime() - new Date(stats.lastGamePlayed).getTime() < 172_800_000) {
+          return true;
+        }
+      }
+      
+    } 
+    if (streak()) {
+      stats.currentStreak += 1;
+    } else {
+      stats.currentStreak = 1;
+    }
+
+    
+
+    // set last game played
+    stats.lastGamePlayed = new Date().toString().split(' ').slice(1, 4).join(' ');
+
+    // determine win percentage
+    let winPercentage
+    if (stats.incomplete === 0) {
+      winPercentage = 100
+    } else {
+      winPercentage = Math.floor((stats.gamesPlayed - stats.incomplete) / stats.gamesPlayed)
+    }
+    stats.winPercentage = winPercentage;
+
+
+    // increase corresponding 'guessed in X' statistic
+    switch(storage.activeRow) {
+      case 0:
+        stats.guessedIn.one += 1;
+        break;
+      case 1: 
+        stats.guessedIn.two += 1;
+        break;
+      case 2:
+        stats.guessedIn.three += 1;
+        break;
+      case 3:
+        stats.guessedIn.four += 1;
+        break;
+      case 4: 
+        stats.guessedIn.five += 1;
+        break;
+      case 5:
+        stats.guessedIn.six += 1;
+        break;
+      default:
+        break;
+    }
+
+    
+
+    
+    console.log(storage)
     localStorage.setItem('turdle-data-key', JSON.stringify(storage))
   }
 
@@ -263,9 +352,17 @@ export default function Game( { closeMenu } ) {
     <div
     className='game w-screen flex-grow flex flex-col'
     style={styles}
-    onLoad={fillStoredGuesses}
+    onLoad={() => {
+      let storage = JSON.parse(localStorage.getItem('turdle-data-key'));
+       
+      // get locally stored active row
+      setActiveRow(storage.activeRow)
+
+      fillStoredGuesses()
+    }}
     onClick={closeMenu}
     >
+      {/* <button className='p-4 border-2' onClick={storeCompletedGameStatistics}>TEST</button> */}
       <div 
         className="word-warning w-auto bg-red-50 border border-black rounded-md p-2 
         absolute mx-auto left-0 right-0 text-center w-max -mt-2 z-10 invisible"
