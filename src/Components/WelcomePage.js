@@ -2,8 +2,7 @@ import React from 'react';
 import logo from '../Assets/Pictures/turd.png'
 import { useTheme } from '../ThemeContext';
 
-export default function WelcomePage( { 
-                                        setUser, 
+export default function WelcomePage( {  
                                         openHowTo, 
                                         closeMenu, 
                                         openSignUp, 
