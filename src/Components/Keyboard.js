@@ -8,12 +8,12 @@ export default function Keyboard( {
   } ) {
 
   const keyStyles = {
-    backgroundColor: '#b1aeae'
+    backgroundColor: '#c1c1c1'
   }
 
   return (
     <div 
-      className='keyboard w-screen flex flex-col gap-2 self-end items-center pb-2'
+      className='keyboard w-screen flex flex-col gap-0.5 self-end items-center pb-2'
     >
       <div className='row-1 flex gap-0.5'>
         <div style={keyStyles} className='letter q' onClick={(e) => {handleLetterInput(e.target.textContent)}}>Q</div>
