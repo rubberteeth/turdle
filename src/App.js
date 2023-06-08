@@ -16,12 +16,9 @@ import { initializeApp } from 'firebase/app'
 
 import { 
   collection, 
-  addDoc, 
-  serverTimestamp, 
   getFirestore, 
   doc,
   getDoc,
-  updateDoc,
   setDoc,
 } from 'firebase/firestore'
   
@@ -45,31 +42,32 @@ const playerInfoTemplate = {
   winPercentage: 0,
   currentStreak: 0,
   maxStreak: 0,
-  guessStats : {
-    guessedInOne: 0,
-    guessedInTwo: 0,
-    guessedInThree: 0,
-    guessedInFour: 0,
-    guessedInFive: 0,
-    guessedInSix: 0,
+  guessedIn : {
+    one: 0,
+    two: 0,
+    three: 0,
+    four: 0,
+    five: 0,
+    six: 0,
   },
   incomplete: 0,
   lastGamePlayed: null,
+}
+
+const guessesTemplate = {
+  0: null,
+  1: null,
+  2: null,
+  3: null,
+  4: null,
+  5: null,
 }
 
 
 const dataTemplate = {
   username: null, 
   activeRow: 0,
-  dailyWord: null,
-  guesses: {
-    0: null,
-    1: null,
-    2: null,
-    3: null,
-    4: null,
-    5: null,
-  },
+  guesses: guessesTemplate,
   playerStatistics: playerInfoTemplate,
 }
 
@@ -77,6 +75,16 @@ const dataTemplate = {
 
 function App() {
   const [user, setUser] = useState(null);
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    let user;
+    if (getStorage('turdle-data-key')) {
+      user = getStorage('turdle-data-key').username
+    }
+    if (user !== null) setUser(user)
+    setTimeout(() => {setIsLoading(false)}, 600);
+  }, [])
 
 
 // ----- User functions 
@@ -90,13 +98,14 @@ function App() {
         const user = userCredential.user;
         alert('account successfully created!')
         setUser(email)
+        setUsername(email)
         addUserToDatabase(user)
       })
       .catch((e) => {
         console.log(e.code, e.message)
         alert(`failed to create account: ${e.code} `)
       });
-      
+    
   }
 
   async function signInUser(email, password) {
@@ -104,13 +113,15 @@ function App() {
       .then((userCredential) => {
         console.log('successful log in')
         // const user = userCredential.user;
-        getUserFromDatabase(email)
+        getUserFromDatabaseToStoreLocally(email)
         setUser(email);
+        setUsername(email)
       })
       .catch(e => {
         console.log(e.code, e.message)
         alert(`log in attempt failed: ${e.message}`)
       })
+      
   }
 
   function signOutUser() {
@@ -118,6 +129,7 @@ function App() {
     signOut(auth)
       .then(() => {
         setUser(null)
+        setUsername(null)
         alert('you have been signed out')
       })
       .catch((e) => {
@@ -130,19 +142,20 @@ function App() {
   async function addUserToDatabase(user) {
     const usersRef = collection(getFirestore(), "users");
     await setDoc(doc(usersRef, user.email), {
-      email: user.email, 
+      username: user.email, 
       timeCreated: user.metadata.creationTime,
-      playerInfo: dataTemplate,
+      info: dataTemplate,
       uid: user.uid
     });
   }
 
-  async function getUserFromDatabase(email) {
+  async function getUserFromDatabaseToStoreLocally(email) {
     const docRef = doc(getFirestore(), "users", email);
     const docSnap = await getDoc(docRef);
     if (docSnap.exists()) {
-      console.log("Document data:", docSnap.data());
-      storeUserDataLocally(docSnap.data())
+      console.log('User data updated')
+      setLocalStorage(docSnap.data().info)
+      setUsername(docSnap.data().username)
     } else {
       console.log("No such document!");
       return false
@@ -154,53 +167,53 @@ function App() {
 
 //  ----- Local storage and data functions
 
-  
+   
 
-
-
-  function initLocalStorageData() {
-    if (localStorage.getItem('turdle-data-key')) {
-      return
-    } else {
-      localStorage.setItem('turdle-data-key', JSON.stringify(dataTemplate));
-      localStorage.setItem('turdle-theme', JSON.stringify(false));
-      console.log('local storage initialized');
-    }
+  function getStorage(key) {
+    return JSON.parse(localStorage.getItem(key))
   }
 
   function setLocalStorage(data) {
     localStorage.setItem('turdle-data-key', JSON.stringify(data));
   }
 
+  function setUsername(username) {
+    let storage = getStorage('turdle-data-key');
+    storage.username = username;
+    setLocalStorage(storage);
+  }
+
+  function initLocalStorageData(user) {
+    if (localStorage.getItem('turdle-data-key')) {
+      return
+    } else {
+      setLocalStorage(dataTemplate)
+      localStorage.setItem('turdle-theme', JSON.stringify(false));
+      console.log('local storage initialized');
+    }
+  }
+
+  function updateLocalStorageData(user) {
+    if (user) {
+      getUserFromDatabaseToStoreLocally(user);
+    }
+  }
+
   
+  
+  async function getDailyWordFromDB() {
+    const word = doc(getFirestore(), 'words', 'dailyWord');
+    const wordSnap = await getDoc(word);
+    return await wordSnap.data().word
+  }
+
 
   async function storeDailyWordLocally() {
-    let storage = JSON.parse(localStorage.getItem('turdle-data-key'));
-
-    async function getDailyWordFromDB() {
-      const word = doc(getFirestore(), 'words', 'dailyWord');
-      const wordSnap = await getDoc(word);
-      return await wordSnap.data().word
-    }
-    storage.dailyWord = await getDailyWordFromDB();
-    setLocalStorage(storage)
+    let dailyWord = await getDailyWordFromDB();
+    localStorage.setItem('turdle-daily-word', JSON.stringify(dailyWord));
   }
-
-  function storeUserDataLocally(userData) {
-    // user passed in is a docSnap from firebase DB
-    let localUser = userData.playerInfo
-    console.log('storing user data locally. . . ')
-    localStorage.setItem('turdle-data-key', JSON.stringify(localUser))
-  }
-
-
-
 
   
-
-
-
-
 
 
 
@@ -304,59 +317,70 @@ function App() {
 // ------ GAME FUNCTIONS
 
 
-// return boolean comparing if today's date matches daily word's date on DB
-async function isNewDay() {
-  let today = new Date().toString().split(' ').slice(1, 4).join(' ');
-  const dailyWordRef = doc(getFirestore(), 'words', 'dailyWord');
-  const dialyWordSnap = await getDoc(dailyWordRef);
-  const storedDate = dialyWordSnap.data().day;
-  if (storedDate === today) return false
-  return true
-}
-
-
-async function setWord() {
-  // if day hasn't changed, return from function
-  if (await isNewDay() !== true) return 
-  // reference to entire words list document;
-  const fullWordsListRef = doc(getFirestore(), 'words', 'fullWordsList')
-  const fullWordsListSnap = await getDoc(fullWordsListRef);
-
-  // use length of valid words list to choose a random word
-  let wordsListLength = fullWordsListSnap.data().validWordsList.length
-
-  // ste random word to a variable
-  let randomWord = fullWordsListSnap.data().validWordsList[Math.floor(Math.random() * wordsListLength)]
-
-  // reference to 'words' collection on db
-  const wordsRef = collection(getFirestore(), 'words');
-
-  // reference to used words document on db
-  const usedWordsRef = doc(getFirestore(), 'words', 'usedWordsList');
-  // snapshot of used words data
-  const usedWordsSnap = await getDoc(usedWordsRef);
-  // copy of used words array from db 
-  const usedWords = usedWordsSnap.data().usedWords
-
-  // if word in used words list, pick a new word, debated on removing words from words list altogether 
-  // but decided to use a separate array to keep track of used words.
-  while (usedWords.indexOf(randomWord) !== -1) {
-    randomWord = fullWordsListSnap.data().validWordsList[Math.floor(Math.random() * wordsListLength)]
+  // return boolean comparing if today's date matches daily word's date on DB
+  async function isNewDay() {
+    let today = new Date().toString().split(' ').slice(1, 4).join(' ');
+    const dailyWordRef = doc(getFirestore(), 'words', 'dailyWord');
+    const dialyWordSnap = await getDoc(dailyWordRef);
+    const storedDate = dialyWordSnap.data().day;
+    if (storedDate === today) return false
+    return true
   }
 
-  // create/update random word document using randomWord variable
-  await setDoc(doc(wordsRef, 'dailyWord'), {
-    // split new date into day/month/year,  example : 'Jan 01 2023'
-    day: new Date().toString().split(' ').slice(1, 4).join(' '),
-    // choose random word to set to DB
-    word: randomWord
-  })
-  
-  // create/update used words list on DB so words don't get used twice
-  await setDoc(doc(wordsRef, 'usedWordsList'), {
-    usedWords: [...usedWords, randomWord]
-  })
-}
+
+  async function setWord() {
+    // if day hasn't changed, return from function
+    if (await isNewDay() !== true) return 
+    resetGameData()
+
+    // reference to entire words list document;
+    const fullWordsListRef = doc(getFirestore(), 'words', 'fullWordsList')
+    const fullWordsListSnap = await getDoc(fullWordsListRef);
+
+    // use length of valid words list to choose a random word
+    let wordsListLength = fullWordsListSnap.data().validWordsList.length
+
+    // ste random word to a variable
+    let randomWord = fullWordsListSnap.data().validWordsList[Math.floor(Math.random() * wordsListLength)]
+
+    // reference to 'words' collection on db
+    const wordsRef = collection(getFirestore(), 'words');
+
+    // reference to used words document on db
+    const usedWordsRef = doc(getFirestore(), 'words', 'usedWordsList');
+    // snapshot of used words data
+    const usedWordsSnap = await getDoc(usedWordsRef);
+    // copy of used words array from db 
+    const usedWords = usedWordsSnap.data().usedWords
+
+    // if word in used words list, pick a new word, debated on removing words from words list altogether 
+    // but decided to use a separate array to keep track of used words.
+    while (usedWords.indexOf(randomWord) !== -1) {
+      randomWord = fullWordsListSnap.data().validWordsList[Math.floor(Math.random() * wordsListLength)]
+    }
+
+    // create/update random word document using randomWord variable
+    await setDoc(doc(wordsRef, 'dailyWord'), {
+      // split new date into day/month/year,  example : 'Jan 01 2023'
+      day: new Date().toString().split(' ').slice(1, 4).join(' '),
+      // choose random word to set to DB
+      word: randomWord
+    })
+
+    
+    
+    // create/update used words list on DB so words don't get used twice
+    await setDoc(doc(wordsRef, 'usedWordsList'), {
+      usedWords: [...usedWords, randomWord]
+    })
+  }
+
+  function resetGameData() {
+    let storage = getStorage('turdle-data-key');
+    storage.activeRow = 0;
+    storage.guesses = guessesTemplate;
+    setLocalStorage(storage)
+  }
 
 
 //  --- temp functions 
@@ -384,11 +408,14 @@ async function setWord() {
 
   return (
     <ThemeProvider>
-      <div 
+      { isLoading 
+      ? <h1 className="flex items-center m-auto">Loading</h1>
+      : <div 
         onLoad={() => {
           setWord()
-          initLocalStorageData()
           storeDailyWordLocally()
+          initLocalStorageData()
+          updateLocalStorageData(user)
         }}
         className="app flex-grow flex flex-col justify-center items-center"
       >
@@ -399,11 +426,14 @@ async function setWord() {
 
         <button
           onClick={() => {
-            // storeDailyWordLocally()
+            let storage = getStorage('turdle-data-key');
+            storage.hello = 'world';
+            setLocalStorage(storage)
           }}
         ></button>
 
         <Menu 
+          user={user}
           signOutUser={signOutUser} 
           openHowTo={openHowTo}
           closeMenu={closeMenu}
@@ -425,9 +455,10 @@ async function setWord() {
         />
 
         {user
-        ?
+        ? 
           <Game 
             closeMenu={closeMenu}
+            getStorage={getStorage}
           />
         :
           <WelcomePage 
@@ -439,7 +470,7 @@ async function setWord() {
             openDataWarning={openDataWarning}
           />
         }
-      </div>
+      </div>}
     </ThemeProvider>
   );
 };
