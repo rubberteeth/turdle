@@ -5,8 +5,12 @@ import { doc, getDoc, getFirestore } from "firebase/firestore";
 
 import Keyboard from './Keyboard'
 
+function getStorage() {
+  return JSON.parse(localStorage.getItem('turdle-data-key'))
+}
 
-export default function Game( { closeMenu } ) {
+
+export default function Game( { closeMenu, user } ) {
 
   const [currentGuess, setCurrentGuess] = useState([])
   const [activeRow, setActiveRow] = useState(0)
@@ -30,11 +34,19 @@ export default function Game( { closeMenu } ) {
     }  
     // check game is still being played
     if (activeRow < 6) updateGuess()
-  },[currentGuess, activeRow])
+  },[currentGuess, activeRow, ])
 
 
-  function fillStoredGuesses() {
-    const guesses = JSON.parse(localStorage.getItem('turdle-data-key')).guesses;
+  async function fillStoredGuesses() {
+    let guesses;
+    if (user === 'guest') guesses = getStorage().guesses
+    else {
+      const docRef = doc(getFirestore(), "users", user);
+      const docSnap = await getDoc(docRef);
+      guesses = docSnap.data().info.guesses
+    }
+
+
     // if no stored guesses, return
     if (guesses[0] === null) return
     for (let row in guesses) {
@@ -246,7 +258,7 @@ export default function Game( { closeMenu } ) {
 
   function storeGuessLocally() {
     // make local storage copy
-    let storage = JSON.parse(localStorage.getItem('turdle-data-key'));
+    let storage = getStorage();
     // store guess attempt in array
     let guess = []
     document.querySelectorAll(`.guess-row-${activeRow}>div`).forEach(square => {
@@ -260,40 +272,42 @@ export default function Game( { closeMenu } ) {
 
 
   function incrementLocallyStoredActiveRow() {
-    let storage = JSON.parse(localStorage.getItem('turdle-data-key'));
+    let storage = getStorage();
     storage.activeRow++;
     localStorage.setItem('turdle-data-key', JSON.stringify(storage))
   }
 
 
-
+  
   function storeCompletedGameStatistics() {
-    let storage = JSON.parse(localStorage.getItem('turdle-data-key'));
+    let storage = getStorage();
     let stats = storage.playerStatistics;
 
     // increment games played
     stats.gamesPlayed += 1;
 
- 
+    // game finished incomplete
     if (storage.guesses[5] !== null 
       && storage.guesses[5].join('').toLowerCase() !== getDailyWordFromStorage().toLowerCase()) {
       stats.incomplete += 1
     }
-    
-
-    // determine streak based on previous date
+    // determine streak based on last game played
     function streak() {
       if (stats.lastGamePlayed === null) return false;
+      // use UTC day (0-6 for mon-sun) to check within one day
       let lastDay = new Date(stats.lastGamePlayed).getUTCDay();
       let today = new Date().getUTCDay();
-      if (lastDay +1 === today || (lastDay === 6 && today === 0)) {
-          // 172_800_000 === 48 hours
+      // check days are also within 48 hours
+      console.log(today)
+      if (lastDay + 1 === today || (lastDay === 6 && today === 0)) {
+          // 172_800_000 ms === 48 hours
         if (new Date().getTime() - new Date(stats.lastGamePlayed).getTime() < 172_800_000) {
           return true;
         }
       }
-      
+      return false
     } 
+    
     if (streak()) {
       stats.currentStreak += 1;
     } else {
@@ -302,7 +316,7 @@ export default function Game( { closeMenu } ) {
 
     
 
-    // set last game played
+    // set 'new' last game played
     stats.lastGamePlayed = new Date().toString().split(' ').slice(1, 4).join(' ');
 
     // determine win percentage
@@ -310,7 +324,7 @@ export default function Game( { closeMenu } ) {
     if (stats.incomplete === 0) {
       winPercentage = 100
     } else {
-      winPercentage = Math.floor((stats.gamesPlayed - stats.incomplete) / stats.gamesPlayed)
+      winPercentage = Math.floor((((stats.gamesPlayed - stats.incomplete) / stats.gamesPlayed) * 100))
     }
     stats.winPercentage = winPercentage;
 
@@ -340,6 +354,10 @@ export default function Game( { closeMenu } ) {
     }
 
     
+    if (stats.currentStreak > stats.maxStreak 
+      || stats.maxStreak === null) stats.maxStreak = stats.currentStreak;
+
+    
 
     
     console.log(storage)
@@ -353,7 +371,7 @@ export default function Game( { closeMenu } ) {
     className='game w-screen flex-grow flex flex-col'
     style={styles}
     onLoad={() => {
-      let storage = JSON.parse(localStorage.getItem('turdle-data-key'));
+      let storage = getStorage();
        
       // get locally stored active row
       setActiveRow(storage.activeRow)
@@ -362,7 +380,7 @@ export default function Game( { closeMenu } ) {
     }}
     onClick={closeMenu}
     >
-      {/* <button className='p-4 border-2' onClick={storeCompletedGameStatistics}>TEST</button> */}
+      <button className='p-4 border-2' onClick={storeCompletedGameStatistics}>TEST</button>
       <div 
         className="word-warning w-auto bg-red-50 border border-black rounded-md p-2 
         absolute mx-auto left-0 right-0 text-center w-max -mt-2 z-10 invisible"
