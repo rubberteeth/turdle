@@ -24,6 +24,9 @@ export default function DataWarning( { setUser, closeDataWarning } ) {
           pt-2 pb-2 font-bold text-gray-50 hover:text-green-600 hover:bg-gray-50'
           onClick={() => {
             setUser('guest');
+            let storage = JSON.parse(localStorage.getItem('turdle-data-key'))
+            storage.username = 'guest'
+            localStorage.setItem('turdle-data-key', JSON.stringify(storage))
             closeDataWarning();
           }}
         >
