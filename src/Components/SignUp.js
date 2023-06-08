@@ -40,8 +40,6 @@ export default function SignUp( { closeSignUp, createUser } ) {
       return
     }
     createUser(emailRef.current.value, passwordRef.current.value)
-    warningRef.current.className = '';
-    warningRef.current.textContent = '';
     closeSignUp()
   }
 
@@ -100,6 +98,11 @@ export default function SignUp( { closeSignUp, createUser } ) {
           </button>
         </form>
         <button
+          onClick={() => {
+            warningRef.current.className = '';
+            warningRef.current.textContent = '';
+            closeSignUp();
+          }}
           className='text-md w-4/6 mt-2 mb-4 rounded-lg border-2 bg-slate-400 border-gray-800 
           pt-2 pb-2 font-bold text-gray-50 hover:text-slate-400 hover:bg-gray-50'
         >

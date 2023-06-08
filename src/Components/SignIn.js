@@ -42,8 +42,6 @@ export default function SignIn( { closeSignIn, signInUser } ) {
     }
     signInUser(emailRef.current.value, passwordRef.current.value)
     closeSignIn()
-    warningRef.current.className = '';
-    warningRef.current.textContent = '';
   }
 
   return (
@@ -60,9 +58,7 @@ export default function SignIn( { closeSignIn, signInUser } ) {
             htmlFor="email"
             className='flex flex-col items-start gap-4 my-4 font-bold'
           >
-            
             Email:
-
             <input 
               onChange={emailChange}
               ref={emailRef}
