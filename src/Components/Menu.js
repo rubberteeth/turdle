@@ -1,7 +1,7 @@
 import React from 'react'
 import { useTheme, useThemeUpdate } from '../ThemeContext';
 
-export default function Menu( { signOutUser, openHowTo, closeMenu } ) {
+export default function Menu( { user, signOutUser, openHowTo, closeMenu } ) {
 
   const darkTheme = useTheme()
   const toggleTheme = useThemeUpdate();
@@ -39,7 +39,9 @@ export default function Menu( { signOutUser, openHowTo, closeMenu } ) {
         <div className='w-0.5 h-full bg-black -rotate-45 absolute'></div>
       </div> 
 
-      <ul className='w-full mt-16 p-6 flex flex-col gap-4'>
+      {user && <p className='m-4 text-center text-2xl'>Hello {user}!</p>}
+      
+      <ul className='w-full mt-8 p-6 flex flex-col gap-4'>
 
         <li className='flex w-full'>
           <label className='switch w-full flex items-center' htmlFor="darkmode"> 
