@@ -1,27 +1,33 @@
 import React from 'react'
 import { useTheme, useThemeUpdate } from '../ThemeContext';
 
-export default function Menu( { user, signOutUser, openHowTo, closeMenu } ) {
+export default function Menu( { 
+  user, 
+  signOutUser, 
+  openHowTo, 
+  closeMenu, 
+  openStatistics,
+  updateStatisticsData } ) {
 
-  const darkTheme = useTheme()
+  const darkTheme = useTheme();
   const toggleTheme = useThemeUpdate();
 
   const styles = {
     backgroundColor : darkTheme ? 'rgb(75, 85, 99)' : 'rgb(220, 220, 220)',
     color: darkTheme ? '#eee' : '#050505',
-  }
+  };
 
   const buttonStyles = {
     borderColor: darkTheme ? '#e5e7eb' : '#323232',
     color: darkTheme ? '#fefefe' : '#050505',
     padding: '5px',
-  }
+  };
 
 
   function toggleStorageDarkTheme() {
-    let data = JSON.parse(localStorage.getItem('turdle-theme'))
-    data = !darkTheme
-    localStorage.setItem('turdle-theme', JSON.stringify(data))
+    let data = JSON.parse(localStorage.getItem('turdle-theme'));
+    data = !darkTheme;
+    localStorage.setItem('turdle-theme', JSON.stringify(data));
   }
 
 
@@ -48,8 +54,8 @@ export default function Menu( { user, signOutUser, openHowTo, closeMenu } ) {
             <p className='text-xl'>Dark Mode</p>
             <input type="checkbox" name='darkmode' id='darkmode' checked={darkTheme}
               onChange={() => {
-                toggleStorageDarkTheme()
-                toggleTheme()
+                toggleStorageDarkTheme();
+                toggleTheme();
                 }}/>
             <span className='slider round'></span>
           </label>
@@ -59,8 +65,8 @@ export default function Menu( { user, signOutUser, openHowTo, closeMenu } ) {
           <button
             style={buttonStyles}
             onClick={() => {
-              closeMenu()
-              openHowTo()
+              closeMenu();
+              openHowTo();
             }}
             className='border-2 rounded-md w-full bg-gray-400 hover:scale-105'
           >
@@ -71,6 +77,11 @@ export default function Menu( { user, signOutUser, openHowTo, closeMenu } ) {
         <li>
           <button
             style={buttonStyles}
+            onClick={() => {
+              updateStatisticsData()
+              closeMenu();
+              openStatistics();
+            }}
             className='border-2 rounded-md w-full bg-gray-400 hover:scale-105'
           >
             My Stats
@@ -84,8 +95,8 @@ export default function Menu( { user, signOutUser, openHowTo, closeMenu } ) {
           <button 
             style={buttonStyles}
             onClick={() => {
-              signOutUser()
-              closeMenu()
+              signOutUser();
+              closeMenu();
             }}
             className='border-2 rounded-md w-full bg-gray-400 hover:scale-105'
           >
