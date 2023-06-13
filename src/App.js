@@ -11,7 +11,6 @@ import SignUp from "./Components/SignUp";
 import SignIn from "./Components/SignIn";
 import DataWarning from "./Components/GuestDataWarning";
 
-
 import { firebaseConfig } from "./firebaseConfig";
 import { initializeApp } from 'firebase/app'
 
@@ -30,13 +29,8 @@ import {
   signOut
 } from "firebase/auth";
 
-
-
-
-
 import { finalWordList } from "./Assets/Data/finalWords";
-
-
+import Statistics from "./Components/Statistics";
 
 const playerInfoTemplate = {
   gamesPlayed: 0,
@@ -53,6 +47,7 @@ const playerInfoTemplate = {
   },
   incomplete: 0,
   lastGamePlayed: null,
+  lastGameCompleted: null,
 }
 
 const guessesTemplate = {
@@ -64,15 +59,12 @@ const guessesTemplate = {
   5: null,
 }
 
-
 const dataTemplate = {
   username: null, 
   activeRow: 0,
   guesses: guessesTemplate,
   playerStatistics: playerInfoTemplate,
 }
-
-
 
 function App() {
   const [user, setUser] = useState(null);
@@ -89,7 +81,6 @@ function App() {
 
 
 // ----- User functions 
-
 
   const auth = getAuth()
 
@@ -113,14 +104,32 @@ function App() {
     signInWithEmailAndPassword(auth, email, password)
       .then(() => {
         console.log('successful log in')
-        getUserFromDatabaseToStoreLocally(email)
-        setUser(email);
+        setIsLoading(true)
+
+        // check if game data needs to be reset
+        isNewDayForUser(email).then((res) => {
+          if(res === true) {
+            console.log('is new day, resetting game data')
+            resetGameData(email)
+            getUserFromDatabaseToStoreLocally(email)
+            setUser(email);
+          } else {
+            getUserFromDatabaseToStoreLocally(email)
+            setUser(email);
+          }
+        }, (rej) => {
+          console.log('rejected:', rej)
+        })
+
+        setTimeout(setIsLoading(false), 500);
       })
+        
       .catch(e => {
         console.log(e.code, e.message)
         alert(`log in attempt failed: ${e.message}`)
       })
-      
+
+    
   }
 
   function signOutUser() {
@@ -154,7 +163,9 @@ function App() {
     const docRef = doc(getFirestore(), "users", email);
     const docSnap = await getDoc(docRef);
     if (docSnap.exists()) {
-      setLocalStorage('turdle-data-key', docSnap.data().info)
+      let storage = docSnap.data().info;
+      storage.username = docSnap.data().username;
+      setLocalStorage('turdle-data-key', storage)
     } else {
       console.log("No such document!");
       return false
@@ -191,21 +202,12 @@ function App() {
       console.log('local storage initialized');
     }
   }
-
-  function updateLocalStorageData(user) {
-    if (user) {
-      getUserFromDatabaseToStoreLocally(user);
-    }
-  }
-
-  
   
   async function getDailyWordFromDB() {
     const word = doc(getFirestore(), 'words', 'dailyWord');
     const wordSnap = await getDoc(word);
     return await wordSnap.data().word
   }
-
 
   async function storeDailyWordLocally(word) {
     if (word) {
@@ -310,23 +312,101 @@ function App() {
     }, 500)
   }
 
+  function openStatistics() {
+    const statistics = document.querySelector('.statistics');
+    try{
+      statistics.close();
+    } catch(e) {console.log(e)};
+    statistics.showModal();
+    statistics.classList.add('show');
+  }
+
+  function closeStatistics() {
+    const statistics = document.querySelector('.statistics');
+    statistics.classList.remove('show');
+    setTimeout(() => {
+      statistics.close();
+    }, 500);
+  }
+
+  function updateStatisticsData() {
+    const playerStatistics = getStorage('turdle-data-key').playerStatistics;
+    const gamesPlayedElement = document.querySelector('.games-played');
+    const winPercentElement = document.querySelector('.win-percentage');
+    const currentStreakElement = document.querySelector('.current-streak');
+    const maxStreakElement = document.querySelector('.max-streak');
+    const guessedInOneDiv = document.querySelector('div.gi-1');
+    const guessedInTwoDiv = document.querySelector('div.gi-2');
+    const guessedInThreeDiv = document.querySelector('div.gi-3');
+    const guessedInFourDiv = document.querySelector('div.gi-4');
+    const guessedInFiveDiv = document.querySelector('div.gi-5');
+    const guessedInSixDiv = document.querySelector('div.gi-6');
+    const guessedInOneP = document.querySelector('p.gi-1');
+    const guessedInTwoP = document.querySelector('p.gi-2');
+    const guessedInThreeP = document.querySelector('p.gi-3');
+    const guessedInFourP = document.querySelector('p.gi-4');
+    const guessedInFiveP = document.querySelector('p.gi-5');
+    const guessedInSixP = document.querySelector('p.gi-6');
+
+    gamesPlayedElement.textContent = playerStatistics.gamesPlayed;
+    winPercentElement.textContent = playerStatistics.winPercentage;
+    currentStreakElement.textContent = playerStatistics.currentStreak;
+    maxStreakElement.textContent = playerStatistics.maxStreak;
+
+    function determineWidth(value) {
+      if (value === 0 || playerStatistics.gamesPlayed === 0) return 50;
+      return Math.floor(((value / playerStatistics.gamesPlayed) * 100) * 2.5) + 50;
+    }
+
+    guessedInOneP.textContent = playerStatistics.guessedIn.one;
+    guessedInTwoP.textContent = playerStatistics.guessedIn.two;
+    guessedInThreeP.textContent = playerStatistics.guessedIn.three;
+    guessedInFourP.textContent = playerStatistics.guessedIn.four;
+    guessedInFiveP.textContent = playerStatistics.guessedIn.five;
+    guessedInSixP.textContent = playerStatistics.guessedIn.six;
+
+
+    guessedInOneDiv.style.width = `${determineWidth(playerStatistics.guessedIn.one)}px`;
+    guessedInTwoDiv.style.width = `${determineWidth(playerStatistics.guessedIn.two)}px`;
+    guessedInThreeDiv.style.width = `${determineWidth(playerStatistics.guessedIn.three)}px`;
+    guessedInFourDiv.style.width = `${determineWidth(playerStatistics.guessedIn.four)}px`;
+    guessedInFiveDiv.style.width = `${determineWidth(playerStatistics.guessedIn.five)}px`;
+    guessedInSixDiv.style.width = `${determineWidth(playerStatistics.guessedIn.six)}px`;
 
 
 
 
 
 
+    //
+    //
+    //
+    //
+    //
+
+  }
+
+
+
+  
 // ------ GAME FUNCTIONS
+
+  async function isNewDayForUser(user) {
+    let today = new Date().toString().split(' ').slice(1, 4).join(' ');
+    const userRef = doc(getFirestore(), 'users', user);
+    const userSnap = await getDoc(userRef);
+    const storedDate = userSnap.data().info.playerStatistics.lastGamePlayed
+    return storedDate !== today;
+  }
 
 
   // return boolean comparing if today's date matches daily word's date on DB
   async function isNewDay() {
     let today = new Date().toString().split(' ').slice(1, 4).join(' ');
     const dailyWordRef = doc(getFirestore(), 'words', 'dailyWord');
-    const dialyWordSnap = await getDoc(dailyWordRef);
-    const storedDate = dialyWordSnap.data().day;
-    if (storedDate === today) return false
-    return true
+    const dailyWordSnap = await getDoc(dailyWordRef);
+    const storedDate = dailyWordSnap.data().day;
+    return storedDate !== today;
   }
 
 
@@ -377,11 +457,15 @@ function App() {
     storeDailyWordLocally(randomWord)
   }
 
-  function resetGameData() {
-    let storage = getStorage('turdle-data-key');
-    storage.activeRow = 0;
-    storage.guesses = guessesTemplate;
-    setLocalStorage('turdle-data-key', storage)
+  async function resetGameData(user) {
+    setLocalStorage('turdle-data-key', dataTemplate)
+
+    if (user) {
+      const usersRef = collection(getFirestore(), "users");
+      await setDoc(doc(usersRef, user), {
+        info: getStorage('turdle-data-key')
+      }, {merge: true});
+    }
   }
 
 
@@ -414,10 +498,9 @@ function App() {
       ? <h1 className="flex items-center m-auto">Loading</h1>
       : <div 
         onLoad={() => {
+          initLocalStorageData()
           setWord()
           storeDailyWordLocally()
-          initLocalStorageData()
-          updateLocalStorageData(user)
         }}
         className="app flex-grow flex flex-col justify-center items-center"
       >
@@ -428,17 +511,18 @@ function App() {
 
         {/* <button
           onClick={() => {
-            let storage = getStorage('turdle-data-key');
-            storage.hello = 'world';
-            setLocalStorage('turdle-data-key', storage)
+          setWord()
+            
           }}
-        ></button> */}
+        >TEST</button> */}
 
         <Menu 
           user={user}
           signOutUser={signOutUser} 
           openHowTo={openHowTo}
           closeMenu={closeMenu}
+          openStatistics={openStatistics}
+          updateStatisticsData={updateStatisticsData}
         />
         <HowToPlayModal
           closeHowTo={closeHowTo}
@@ -456,12 +540,19 @@ function App() {
           closeDataWarning={closeDataWarning}
           setUser={setUser}
         />
+        <Statistics 
+          closeStatistics={closeStatistics}
+          getStorage={getStorage}
+        />
+        
 
         {user
         ? 
           <Game 
             user={user}
             closeMenu={closeMenu}
+            openStatistics={openStatistics}
+            updateStatisticsData={updateStatisticsData}
           />
         :
           <WelcomePage 
