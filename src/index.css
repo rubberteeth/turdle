@@ -42,10 +42,10 @@
 
 @keyframes shake {
   0%, 40%, 80% {
-    transform: translateX(-8px);
+    transform: translateX(-6px);
   }
   20%, 60%, 100% {
-    transform: translateX(8px);
+    transform: translateX(6px);
   }
 }
 
@@ -120,6 +120,7 @@ dialog::backdrop {
   font-size: min(2.5rem, 6vh);
   transition: all .4s ease-in-out;
 }
+
 
 /* Game effects */
 
