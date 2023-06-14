@@ -10,6 +10,7 @@ import Header from "./Components/Header";
 import SignUp from "./Components/SignUp";
 import SignIn from "./Components/SignIn";
 import DataWarning from "./Components/GuestDataWarning";
+import Statistics from "./Components/Statistics";
 
 import { firebaseConfig } from "./firebaseConfig";
 import { initializeApp } from 'firebase/app'
@@ -29,8 +30,8 @@ import {
   signOut
 } from "firebase/auth";
 
-import { finalWordList } from "./Assets/Data/finalWords";
-import Statistics from "./Components/Statistics";
+
+
 
 const playerInfoTemplate = {
   gamesPlayed: 0,
@@ -85,6 +86,7 @@ function App() {
   const auth = getAuth()
 
   function createUser(email, password) {
+    setIsLoading(true);
     createUserWithEmailAndPassword(auth, email, password)
       .then((userCredential) => {
         const user = userCredential.user;
@@ -92,6 +94,9 @@ function App() {
         setUser(email)
         setUsername(email)
         addUserToDatabase(user)
+        setTimeout(() => {
+          setIsLoading(false)
+        }, 500);
       })
       .catch((e) => {
         console.log(e.code, e.message)
@@ -104,32 +109,12 @@ function App() {
     signInWithEmailAndPassword(auth, email, password)
       .then(() => {
         console.log('successful log in')
-        setIsLoading(true)
-
-        // check if game data needs to be reset
-        isNewDayForUser(email).then((res) => {
-          if(res === true) {
-            console.log('is new day, resetting game data')
-            resetGameData(email)
-            getUserFromDatabaseToStoreLocally(email)
-            setUser(email);
-          } else {
-            getUserFromDatabaseToStoreLocally(email)
-            setUser(email);
-          }
-        }, (rej) => {
-          console.log('rejected:', rej)
-        })
-
-        setTimeout(setIsLoading(false), 500);
+        setUser(email)
       })
-        
       .catch(e => {
         console.log(e.code, e.message)
         alert(`log in attempt failed: ${e.message}`)
       })
-
-    
   }
 
   function signOutUser() {
@@ -138,14 +123,18 @@ function App() {
       .then(() => {
         setUser(null)
         setUsername(null)
-        resetGameData()
-        alert('you have been signed out')
+        resetGameData();
       })
       .catch((e) => {
         console.log(e.code, e.message)
         alert(e.code)
       })
   }
+
+
+
+//  ----- Local storage and data functions
+
 
 
   async function addUserToDatabase(user) {
@@ -157,27 +146,7 @@ function App() {
       info: dataTemplate,
       uid: user.uid
     });
-  }
-
-  async function getUserFromDatabaseToStoreLocally(email) {
-    const docRef = doc(getFirestore(), "users", email);
-    const docSnap = await getDoc(docRef);
-    if (docSnap.exists()) {
-      let storage = docSnap.data().info;
-      storage.username = docSnap.data().username;
-      setLocalStorage('turdle-data-key', storage)
-    } else {
-      console.log("No such document!");
-      return false
-    }
-  }
-
-
-
-
-//  ----- Local storage and data functions
-
-   
+  } 
 
   function getStorage(key) {
     return JSON.parse(localStorage.getItem(key))
@@ -218,9 +187,6 @@ function App() {
   }
 
   
-
-
-
 
   // Menu and Dialog box functions;
 
@@ -365,7 +331,6 @@ function App() {
     guessedInFiveP.textContent = playerStatistics.guessedIn.five;
     guessedInSixP.textContent = playerStatistics.guessedIn.six;
 
-
     guessedInOneDiv.style.width = `${determineWidth(playerStatistics.guessedIn.one)}px`;
     guessedInTwoDiv.style.width = `${determineWidth(playerStatistics.guessedIn.two)}px`;
     guessedInThreeDiv.style.width = `${determineWidth(playerStatistics.guessedIn.three)}px`;
@@ -373,33 +338,13 @@ function App() {
     guessedInFiveDiv.style.width = `${determineWidth(playerStatistics.guessedIn.five)}px`;
     guessedInSixDiv.style.width = `${determineWidth(playerStatistics.guessedIn.six)}px`;
 
-
-
-
-
-
-    //
-    //
-    //
-    //
-    //
-
   }
 
 
 
   
 // ------ GAME FUNCTIONS
-
-  async function isNewDayForUser(user) {
-    let today = new Date().toString().split(' ').slice(1, 4).join(' ');
-    const userRef = doc(getFirestore(), 'users', user);
-    const userSnap = await getDoc(userRef);
-    const storedDate = userSnap.data().info.playerStatistics.lastGamePlayed
-    return storedDate !== today;
-  }
-
-
+ 
   // return boolean comparing if today's date matches daily word's date on DB
   async function isNewDay() {
     let today = new Date().toString().split(' ').slice(1, 4).join(' ');
@@ -457,39 +402,12 @@ function App() {
     storeDailyWordLocally(randomWord)
   }
 
-  async function resetGameData(user) {
-    setLocalStorage('turdle-data-key', dataTemplate)
-
-    if (user) {
-      const usersRef = collection(getFirestore(), "users");
-      await setDoc(doc(usersRef, user), {
-        info: getStorage('turdle-data-key')
-      }, {merge: true});
-    }
-  }
-
-
-//  --- temp functions 
-
-
-
-  async function addWordsListToDatabase(list) {
-    const wordsRef = collection(getFirestore(), 'words');
-    await setDoc(doc(wordsRef, 'fullWordsList'), {
-      validWordsList: list
-    })
-  }
-
-
-
-
-
-
-
-
-
-
-
+  async function resetGameData() {
+    let storage = getStorage('turdle-data-key');
+    storage.guesses = guessesTemplate;
+    storage.activeRow = 0;
+    setLocalStorage('turdle-data-key', storage)
+  };
 
 
   return (
@@ -508,13 +426,6 @@ function App() {
           user={user}
           openMenu={openMenu}
         />
-
-        {/* <button
-          onClick={() => {
-          setWord()
-            
-          }}
-        >TEST</button> */}
 
         <Menu 
           user={user}
@@ -549,6 +460,8 @@ function App() {
         {user
         ? 
           <Game 
+            guessesTemplate={guessesTemplate}
+            isLoading={isLoading}
             user={user}
             closeMenu={closeMenu}
             openStatistics={openStatistics}
