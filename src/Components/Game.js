@@ -9,13 +9,16 @@ function getStorage(key) {
   return JSON.parse(localStorage.getItem(key))
 }
 
-
-export default function Game( { closeMenu, user, updateStatisticsData, openStatistics } ) {
+export default function Game( { 
+  closeMenu, 
+  user, 
+  updateStatisticsData, 
+  openStatistics,
+  isLoading,
+  guessesTemplate } ) {
 
   const [currentGuess, setCurrentGuess] = useState([]);
   const [activeRow, setActiveRow] = useState(0);
-
-
 
   const darkTheme = useTheme();
 
@@ -23,7 +26,10 @@ export default function Game( { closeMenu, user, updateStatisticsData, openStati
     backgroundColor : darkTheme ? 'rgb(110 125 140)' : 'rgb(245, 245, 245)',
     color: darkTheme ? '#fefefe' : '#111',
   };
-
+  
+  const boxStyles = {
+    backgroundColor: '#c1c1c1'
+  };
   
   useEffect(() => {
 
@@ -38,27 +44,8 @@ export default function Game( { closeMenu, user, updateStatisticsData, openStati
     if (activeRow < 6 && !gameCompleted()) updateGuess();
   },[currentGuess, activeRow]);
 
-  useEffect(() => {
-    async function getActiveRow() {
-      if (user === 'guest') return;
-      const docRef = doc(getFirestore(), "users", user);
-      const docSnap = await getDoc(docRef);
-      setActiveRow(await docSnap.data().info.activeRow);
-    }
-    getActiveRow();
-  }, [user]);
-
-  
-
-
   async function fillStoredGuesses() {
-    let guesses;
-    if (user === 'guest') guesses = getStorage('turdle-data-key').guesses;
-    else {
-      const docRef = doc(getFirestore(), "users", user);
-      const docSnap = await getDoc(docRef);
-      guesses = docSnap.data().info.guesses;
-    };
+    let guesses = getStorage('turdle-data-key').guesses;
 
     // if no stored guesses, return
     if (guesses[0] === null) return;
@@ -87,6 +74,73 @@ export default function Game( { closeMenu, user, updateStatisticsData, openStati
     setCurrentGuess(prev => [...prev, letter]);
   }; 
 
+  async function handleGuess() {
+    // game is finished
+    if (activeRow === 6) return;
+
+    // not a full word
+    if (currentGuess.length !== 5) return;
+
+    // guess is correct show stats and end game loop
+    if (lowerCaseGuess() === getDailyWordFromStorage().toLowerCase()) {
+      if (gameCompleted()) return;
+      updateLastGamePlayed()
+      storeGuessLocally();
+      animateRowsAndPaintKeys(activeRow);
+      setTimeout(() => {
+        animateWinningRow()
+      }, 2000);
+      setTimeout(() => {
+        switch (activeRow) {
+          case 0:
+            showWarningText('WOW!')
+            break;
+          case 1:
+            showWarningText('SWEET!')
+            break;
+          case 2:
+            showWarningText('NICE!');
+            break;
+          case 3:
+            showWarningText('GREAT!');
+            break
+          case 4: 
+            showWarningText('GOOD JOB!');
+            break
+          case 5:
+            showWarningText('PHEW!');
+            break
+          default:
+            break;
+        }
+      }, 1900);
+      storeCompletedGameStatistics();
+      return;
+    };
+    
+    // guess isn't in word list
+    if (await guessIsInWordList() === false) {
+      shakeRow();
+      showWarningText('not in word list');
+      return;
+    };
+    
+    // all guesses used
+    if (activeRow === 6) {
+      storeCompletedGameStatistics();
+      return;
+    };
+
+    // at this point guess is valid and game hasn't been won
+    updateLastGamePlayed()
+    storeGuessLocally();
+    incrementLocallyStoredActiveRow();
+    storeGuessesOnDB();
+    setActiveRow(prev => prev + 1);
+    animateRowsAndPaintKeys(activeRow);
+    setCurrentGuess([]);
+  };
+
   function lowerCaseGuess() {
     return currentGuess.join('').toLowerCase();
   };
@@ -107,6 +161,21 @@ export default function Game( { closeMenu, user, updateStatisticsData, openStati
       guessRow.classList.remove('shake');
     }, 400);
   };
+
+  function animateWinningRow() {
+    let guessRow = document.querySelector(`.guess-row-${activeRow}`);
+    let interval = 0
+    guessRow.childNodes.forEach(square => {
+      setTimeout(() => {
+        square.classList.toggle('bounce')
+      }, interval);
+      interval += 300
+      setTimeout(() => {
+        square.classList.toggle('bounce')
+      }, 2000);
+      
+    })
+  }
 
   function showWarningText(text) {
     let warningBox = document.querySelector('.word-warning');
@@ -137,81 +206,11 @@ export default function Game( { closeMenu, user, updateStatisticsData, openStati
     localStorage.setItem('turdle-data-key', JSON.stringify(storage));
   }
 
-  async function handleGuess() {
-    // game is finished
-    if (activeRow === 6) return;
-
-    // not a full word
-    if (currentGuess.length !== 5) return;
-
-
-    // guess is correct show stats and end game loop
-    if (lowerCaseGuess() === getDailyWordFromStorage().toLowerCase()) {
-      
-      if (gameCompleted()) return;
-      updateLastGamePlayed()
-      storeGuessLocally();
-      animateRowsAndPaintKeys(activeRow);
-      
-      setTimeout(() => {
-        switch (activeRow) {
-          case 0:
-            showWarningText('WOW!')
-            break;
-          case 1:
-            showWarningText('NICE!')
-            break;
-          case 2:
-            showWarningText('GREAT!');
-            break;
-          case 3:
-            showWarningText('SWEET!');
-            break
-          case 4: 
-            showWarningText('GOOD JOB!');
-            break
-          case 5:
-            showWarningText('PHEW!');
-            break
-          default:
-            break;
-        }
-      }, 2000);
-
-      storeCompletedGameStatistics();
-
-      return;
-    };
-    
-    // guess isn't in word list
-    if (await guessIsInWordList() === false) {
-      shakeRow();
-      showWarningText('not in word list');
-      return;
-    };
-    
-    // all guesses used
-    if (activeRow === 6) {
-      storeCompletedGameStatistics();
-      return;
-    };
-
-    // at this point guess is valid and game hasn't been won
-    updateLastGamePlayed()
-    storeGuessLocally();
-    incrementLocallyStoredActiveRow();
-    storeGuessesOnDB();
-    setActiveRow(prev => prev + 1);
-    animateRowsAndPaintKeys(activeRow);
-    setCurrentGuess([]);
-  };
-
+  
 
   function animateRowsAndPaintKeys(row) {
-    
     // create copy of daily word to mutate
     let tempDailyWord = getDailyWordFromStorage().toLowerCase().split('');
-
     let squares = document.querySelectorAll(`.guess-row-${row}>div`);
 
     // make a guess variable to 'encode' for each row to show the correct number of green
@@ -219,7 +218,6 @@ export default function Game( { closeMenu, user, updateStatisticsData, openStati
     let guess = [];
     squares.forEach(square => guess.push(square.textContent.toLowerCase()));
 
-    
     // place 0s and 1s in for correct letters so correct letters get removed,
     // that way I can use 0s to paint the correct letters green (right letter right spot) without having 
     // the same letter in a previous position painted yellow (right letter wrong spot) unless it should be.
@@ -302,10 +300,6 @@ export default function Game( { closeMenu, user, updateStatisticsData, openStati
 
 
 
-
-
-
-
   // storage related functions ----------
 
   function getDailyWordFromStorage() {
@@ -326,14 +320,11 @@ export default function Game( { closeMenu, user, updateStatisticsData, openStati
     localStorage.setItem('turdle-data-key', JSON.stringify(storage));
   };
 
-
   function incrementLocallyStoredActiveRow() {
     let storage = getStorage('turdle-data-key');
     storage.activeRow++;
     localStorage.setItem('turdle-data-key', JSON.stringify(storage));
   };
-
-
   
   async function storeCompletedGameStatistics() {
     let storage = getStorage('turdle-data-key');
@@ -368,8 +359,6 @@ export default function Game( { closeMenu, user, updateStatisticsData, openStati
     } else {
       stats.currentStreak = 1;
     };
-
-    
 
     // set 'new' last game played
     stats.lastGameCompleted = new Date().toString().split(' ').slice(1, 4).join(' ');
@@ -438,79 +427,122 @@ export default function Game( { closeMenu, user, updateStatisticsData, openStati
     }
   };
 
-  
-  const boxStyles = {
-    backgroundColor: '#c1c1c1'
-  };
+
+  async function isNewDayForUser(user) {
+    if (user === 'guest' || user === null) return;
+    let today = new Date().toString().split(' ').slice(1, 4).join(' ');
+    const userRef = doc(getFirestore(), 'users', user);
+    const userSnap = await getDoc(userRef);
+    const storedDate = userSnap.data().info.playerStatistics.lastGamePlayed
+    return storedDate !== today;
+  }
+
+
+  async function getUserFromDatabaseToStoreLocally(email, isNewDay=false) {
+    if (user === 'guest' || user === null) return;
+    let storage = getStorage('turdle-data-key');
+
+    // grab user data from database
+    const docRef = doc(getFirestore(), "users", email);
+    const docSnap = await getDoc(docRef);
+
+    if (!docSnap.exists()) {
+      console.log('Error finding document');
+      return
+    }
+    // copy of user data;
+    let info = docSnap.data().info
+    // if new day, start new game;
+    if (isNewDay === true) {
+      storage.activeRow = 0;
+      setActiveRow(0)
+      storage.guesses = guessesTemplate;
+    } else {
+      storage.activeRow = info.activeRow;
+      setActiveRow(info.activeRow)
+      storage.guesses = info.guesses;
+    }
+    storage.playerStatistics = info.playerStatistics;
+    storage.username = info.username;
+
+    localStorage.setItem('turdle-data-key', JSON.stringify(storage));
+  }
 
   return (
-    <div
-    className='game w-screen flex-grow flex flex-col'
-    style={styles}
-    onLoad={() => {
-      fillStoredGuesses()
-    }}
-    onClick={closeMenu}
-    >
-      <div 
-        className="word-warning w-auto bg-red-50 border border-black rounded-md p-2 
-        absolute mx-auto left-0 right-0 text-center w-max -mt-2 z-10 invisible"
-      >
-        <p className='word-warning-text font-bold text-gray-900 text-lg'></p>
-      </div>
+    <>
+      { !isLoading &&
       <div
-        className="game-screen w-full flex-grow flex flex-col items-center gap-1 pb-2 pt-2"
+      className='game w-screen flex-grow flex flex-col'
+      style={styles}
+      onLoad={async () => {
+        let isNewDay = await isNewDayForUser(user);
+        await getUserFromDatabaseToStoreLocally(user, isNewDay);
+        fillStoredGuesses();
+      }}
+      onClick={closeMenu}
       >
-        <div className="guess-row guess-row-0 flex-1 flex items-center gap-3">
-          <div style={boxStyles} className="guess-box flex justify-center items-center"></div>
-          <div style={boxStyles} className="guess-box flex justify-center items-center"></div>
-          <div style={boxStyles} className="guess-box flex justify-center items-center"></div>
-          <div style={boxStyles} className="guess-box flex justify-center items-center"></div>
-          <div style={boxStyles} className="guess-box flex justify-center items-center"></div>
+        <div 
+          className="word-warning w-auto bg-red-50 border border-black rounded-md p-2 
+          absolute mx-auto left-0 right-0 text-center w-max -mt-2 z-10 invisible"
+        >
+          <p className='word-warning-text font-bold text-gray-900 text-lg'></p>
         </div>
-        <div className="guess-row guess-row-1 flex-1 flex items-center gap-3">
-          <div style={boxStyles} className="guess-box flex justify-center items-center"></div>
-          <div style={boxStyles} className="guess-box flex justify-center items-center"></div>
-          <div style={boxStyles} className="guess-box flex justify-center items-center"></div>
-          <div style={boxStyles} className="guess-box flex justify-center items-center"></div>
-          <div style={boxStyles} className="guess-box flex justify-center items-center"></div>
+        <div
+          className="game-screen w-full flex-grow flex flex-col items-center gap-1 pb-2 pt-2"
+        >
+          <div className="guess-row guess-row-0 flex-1 flex items-center gap-3">
+            <div style={boxStyles} className="guess-box flex justify-center items-center"></div>
+            <div style={boxStyles} className="guess-box flex justify-center items-center"></div>
+            <div style={boxStyles} className="guess-box flex justify-center items-center"></div>
+            <div style={boxStyles} className="guess-box flex justify-center items-center"></div>
+            <div style={boxStyles} className="guess-box flex justify-center items-center"></div>
+          </div>
+          <div className="guess-row guess-row-1 flex-1 flex items-center gap-3">
+            <div style={boxStyles} className="guess-box flex justify-center items-center"></div>
+            <div style={boxStyles} className="guess-box flex justify-center items-center"></div>
+            <div style={boxStyles} className="guess-box flex justify-center items-center"></div>
+            <div style={boxStyles} className="guess-box flex justify-center items-center"></div>
+            <div style={boxStyles} className="guess-box flex justify-center items-center"></div>
+          </div>
+          <div className="guess-row guess-row-2 flex-1 flex items-center gap-3">
+            <div style={boxStyles} className="guess-box flex justify-center items-center"></div>
+            <div style={boxStyles} className="guess-box flex justify-center items-center"></div>
+            <div style={boxStyles} className="guess-box flex justify-center items-center"></div>
+            <div style={boxStyles} className="guess-box flex justify-center items-center"></div>
+            <div style={boxStyles} className="guess-box flex justify-center items-center"></div>
+          </div>
+          <div className="guess-row guess-row-3 flex-1 flex items-center gap-3">
+            <div style={boxStyles} className="guess-box flex justify-center items-center"></div>
+            <div style={boxStyles} className="guess-box flex justify-center items-center"></div>
+            <div style={boxStyles} className="guess-box flex justify-center items-center"></div>
+            <div style={boxStyles} className="guess-box flex justify-center items-center"></div>
+            <div style={boxStyles} className="guess-box flex justify-center items-center"></div>
+          </div>
+          <div className="guess-row guess-row-4 flex-1 flex items-center gap-3">
+            <div style={boxStyles} className="guess-box flex justify-center items-center"></div>
+            <div style={boxStyles} className="guess-box flex justify-center items-center"></div>
+            <div style={boxStyles} className="guess-box flex justify-center items-center"></div>
+            <div style={boxStyles} className="guess-box flex justify-center items-center"></div>
+            <div style={boxStyles} className="guess-box flex justify-center items-center"></div>
+          </div>
+          <div className="guess-row guess-row-5 flex-1 flex items-center gap-3">
+            <div style={boxStyles} className="guess-box flex justify-center items-center"></div>
+            <div style={boxStyles} className="guess-box flex justify-center items-center"></div>
+            <div style={boxStyles} className="guess-box flex justify-center items-center"></div>
+            <div style={boxStyles} className="guess-box flex justify-center items-center"></div>
+            <div style={boxStyles} className="guess-box flex justify-center items-center"></div>
+          </div>
+          
         </div>
-        <div className="guess-row guess-row-2 flex-1 flex items-center gap-3">
-          <div style={boxStyles} className="guess-box flex justify-center items-center"></div>
-          <div style={boxStyles} className="guess-box flex justify-center items-center"></div>
-          <div style={boxStyles} className="guess-box flex justify-center items-center"></div>
-          <div style={boxStyles} className="guess-box flex justify-center items-center"></div>
-          <div style={boxStyles} className="guess-box flex justify-center items-center"></div>
-        </div>
-        <div className="guess-row guess-row-3 flex-1 flex items-center gap-3">
-          <div style={boxStyles} className="guess-box flex justify-center items-center"></div>
-          <div style={boxStyles} className="guess-box flex justify-center items-center"></div>
-          <div style={boxStyles} className="guess-box flex justify-center items-center"></div>
-          <div style={boxStyles} className="guess-box flex justify-center items-center"></div>
-          <div style={boxStyles} className="guess-box flex justify-center items-center"></div>
-        </div>
-        <div className="guess-row guess-row-4 flex-1 flex items-center gap-3">
-          <div style={boxStyles} className="guess-box flex justify-center items-center"></div>
-          <div style={boxStyles} className="guess-box flex justify-center items-center"></div>
-          <div style={boxStyles} className="guess-box flex justify-center items-center"></div>
-          <div style={boxStyles} className="guess-box flex justify-center items-center"></div>
-          <div style={boxStyles} className="guess-box flex justify-center items-center"></div>
-        </div>
-        <div className="guess-row guess-row-5 flex-1 flex items-center gap-3">
-          <div style={boxStyles} className="guess-box flex justify-center items-center"></div>
-          <div style={boxStyles} className="guess-box flex justify-center items-center"></div>
-          <div style={boxStyles} className="guess-box flex justify-center items-center"></div>
-          <div style={boxStyles} className="guess-box flex justify-center items-center"></div>
-          <div style={boxStyles} className="guess-box flex justify-center items-center"></div>
-        </div>
-        
+        <Keyboard 
+          handleLetterInput={handleLetterInput}
+          handleBackspace={handleBackspace}
+          handleGuess={handleGuess}
+        />
       </div>
-      <Keyboard 
-        handleLetterInput={handleLetterInput}
-        handleBackspace={handleBackspace}
-        handleGuess={handleGuess}
-      />
-    </div>
+      }
+    </>
+    
     
   )
 }
