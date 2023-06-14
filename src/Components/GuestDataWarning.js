@@ -17,18 +17,19 @@ export default function DataWarning( { setUser, closeDataWarning, resetGameData 
         shadow-lg border-4 border-gray-800 w-full p-8'
       >
         <p className='font-bold py-10'>
-          Without an account, some game data may be lost, and player statistics may have inaccuracies.
+          Without an account, game data may be lost, and player statistics may have inaccuracies.
         </p>
         <button 
           className='text-md w-4/6 mt-8 mb-4 rounded-lg border-2 bg-green-600 border-gray-800 
           pt-2 pb-2 font-bold text-gray-50 hover:text-green-600 hover:bg-gray-50'
           onClick={() => {
-            setUser('guest');
-            resetGameData()
             let storage = JSON.parse(localStorage.getItem('turdle-data-key'))
-            storage.username = 'guest'
-            localStorage.setItem('turdle-data-key', JSON.stringify(storage))
+            if (storage.username === 'guest') {
+              storage.username = 'guest'
+              localStorage.setItem('turdle-data-key', JSON.stringify(storage))
+            }
             closeDataWarning();
+            setUser('guest');
           }}
         >
             Continue ?
