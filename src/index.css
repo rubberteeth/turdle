@@ -39,6 +39,23 @@
   }
 }
 
+@keyframes bounce {
+  0% {
+    transform: translateY(0);
+  }
+  30% {
+    transform: translateY(-20px);
+  }
+  60% {
+    transform: translateY(0);
+  }
+  80% {
+    transform: translateY(-7px);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
 
 @keyframes shake {
   0%, 40%, 80% {
@@ -51,6 +68,11 @@
 
 .shake {
   animation-name: shake;
+  animation-duration: 500ms;
+}
+
+.bounce {
+  animation-name: bounce;
   animation-duration: 500ms;
 }
 
@@ -89,7 +111,7 @@ h1 {
 dialog {
   opacity: 0;  
   transition: all 0.5s ease-in-out;
-  max-width: min(100vw, 600px);
+  max-width: min(98vw, 600px);
 }
 
 dialog.show {
@@ -127,7 +149,6 @@ dialog::backdrop {
 .rotate-y {
   transform: rotateY(90deg);
 }
-
 
 
 
