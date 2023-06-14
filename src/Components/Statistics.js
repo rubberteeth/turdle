@@ -2,6 +2,8 @@ import React from 'react'
 import { useTheme } from '../ThemeContext';
 import shareIcon from '../Assets/Pictures/share.png'
 
+import { doc, getDoc, getFirestore } from 'firebase/firestore';
+
 export default function Statistics( { closeStatistics } ) {
 
   const darkTheme = useTheme();
@@ -11,6 +13,48 @@ export default function Statistics( { closeStatistics } ) {
     color: darkTheme ? '#eee' : '#111',
   };
 
+  async function gatherData() {
+    const data = {
+      title: null,
+      text: `\n`
+    }
+
+    // reference to used words document on db
+    const usedWordsRef = doc(getFirestore(), 'words', 'usedWordsList');
+    // snapshot of used words data
+    const usedWordsSnap = await getDoc(usedWordsRef);
+    // use length of list to determine game number
+    let gameNumber = usedWordsSnap.data().usedWords.length;
+
+    data.title = `Turdle ${gameNumber}`;
+
+    let greenSquare = '🟩';
+    let yellowSquare = '🟨';
+    let graySquare = '⬛';
+
+    for (let i = 0; i <= JSON.parse(localStorage.getItem('turdle-data-key')).activeRow; i++) {
+      document.querySelector(`.guess-row-${i}`).childNodes.forEach(square => {
+        switch (square.style.backgroundColor) {
+          case `rgb(113, 113, 122)`:
+            data.text += graySquare;
+            break;
+          case `rgb(251, 191, 36)`:
+            data.text += yellowSquare;
+            break;
+          case `rgb(5, 150, 105)`:
+            data.text += greenSquare;
+            break
+          default:
+            break;
+        }
+        
+      })
+      data.text += `\n`
+    }
+
+
+    return data
+  }
 
   return (
     <dialog 
@@ -26,7 +70,7 @@ export default function Statistics( { closeStatistics } ) {
       > 
         X
       </button>
-      <h3 className='pb-2 font-bold'>STATISTICS</h3>
+      <h3 className='pb-4 font-bold'>STATISTICS</h3>
       <div className="header-stats flex justify-between pb-2">
         <div className='flex flex-col items-center'>
           <p className='games-played text-3xl font-bold'></p>
@@ -45,7 +89,7 @@ export default function Statistics( { closeStatistics } ) {
           <p className='text-sm w-max font-bold'>Max Streak</p>
         </div>
       </div>
-      <h3 className='pb-2 font-bold'>GUESS DISTRIBUTION</h3>
+      <h3 className='py-4 font-bold'>GUESS DISTRIBUTION</h3>
       <div className="guess-distribution flex flex-col gap-1">
         <div className='flex gap-3'>
           <p className='w-6'>1</p>
@@ -85,12 +129,16 @@ export default function Statistics( { closeStatistics } ) {
         </div>
       </div>
 
-      <div className='w-full flex justify-center'>
+      <div className='w-full flex justify-center pt-6'>
         <button 
-          className='w-40 bg-green-500 rounded-xl flex justify-around items-center font-bold'
+          onClick={() => {
+            gatherData().then(res => {
+              navigator.share(res)
+            });
+          }}
+          className='w-max bg-green-500 rounded-xl flex gap-3 items-center font-bold py-2 px-4'
           >SHARE <img className='w-5' src={shareIcon} alt="share icon" />
         </button>
-        
       </div>
       
     </dialog>
