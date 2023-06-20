@@ -27,10 +27,10 @@ export default function HowToPlayModal( { closeHowTo } ) {
     <div className='font-quicksand'>
       <dialog 
         style={styles}
-        className='page-1 text-center text-2xl bg-green-50 rounded-xl 
+        className='page-1 text-center text-xl bg-green-50 rounded-xl 
         shadow-lg border-4 border-gray-800 w-full p-8'
       >
-        <p className='font-bold text-3xl py-8'>
+        <p className='font-bold py-8'>
           You have 6 chances to guess the 5 letter word, 
           your goal is to guess the word in the least amount of tries.
           <br/>
@@ -48,10 +48,10 @@ export default function HowToPlayModal( { closeHowTo } ) {
       </dialog>
       <dialog 
         style={styles}
-        className='page-2 text-center text-2xl bg-green-50 rounded-xl p-8
+        className='page-2 text-center text-xl bg-green-50 rounded-xl p-8
         shadow-lg border-4 border-gray-800'
       >
-        <p className='py-4 text-3xl font-bold'>
+        <p className='py-4 font-bold'>
           Letter backgrounds in game will change color depending on their state:
         </p>
         <ul 
@@ -60,7 +60,7 @@ export default function HowToPlayModal( { closeHowTo } ) {
           border-zinc-400 py-6 px-4 rounded-md font-bold'
         >
           <li className='flex gap-2 items-center text-left'>
-            <div className='h-8 w-8 bg-zinc-500'></div>
+            <div className='h-8 w-8 bg-zinc-500 flex-shrink-0'></div>
             <p>Letter is <em>not</em> in the word</p>
           </li>
           <li className='flex gap-2 items-center text-left'>
@@ -68,7 +68,7 @@ export default function HowToPlayModal( { closeHowTo } ) {
             <p>Letter is in the word, <em>but in the wrong position</em></p>
           </li>
           <li className='flex gap-2 items-center text-left'>
-            <div className='h-8 w-8 bg-green-600'></div>
+            <div className='h-8 w-8 bg-green-600 flex-shrink-0'></div>
             <p>Letter is in the correct position</p>
           </li>
         </ul>
