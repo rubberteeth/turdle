@@ -11,6 +11,7 @@ function getStorage(key) {
 
 export default function Game( { 
   closeMenu, 
+  closeStatistics,
   user, 
   updateStatisticsData, 
   openStatistics,
@@ -41,7 +42,7 @@ export default function Game( {
       }
     }  
     // check game is still being played
-    if (activeRow < 6 && !gameCompleted()) updateGuess();
+    if (activeRow < 6 && !gameHasBeenWon()) updateGuess();
   },[currentGuess, activeRow]);
 
   async function fillStoredGuesses() {
@@ -75,15 +76,23 @@ export default function Game( {
   }; 
 
   async function handleGuess() {
+    if (gameHasBeenWon()) return;
+
     // game is finished
     if (activeRow === 6) return;
 
     // not a full word
     if (currentGuess.length !== 5) return;
 
+    // guess isn't in word list
+    if (await guessIsInWordList() === false) {
+      shakeRow();
+      showWarningText('not in word list');
+      return;
+    };
+
     // guess is correct show stats and end game loop
     if (lowerCaseGuess() === getDailyWordFromStorage().toLowerCase()) {
-      if (gameCompleted()) return;
       updateLastGamePlayed()
       storeGuessLocally();
       animateRowsAndPaintKeys(activeRow);
@@ -118,15 +127,10 @@ export default function Game( {
       return;
     };
     
-    // guess isn't in word list
-    if (await guessIsInWordList() === false) {
-      shakeRow();
-      showWarningText('not in word list');
-      return;
-    };
-    
     // all guesses used
-    if (activeRow === 6) {
+    if (activeRow === 5) {
+      storeGuessLocally();
+      animateRowsAndPaintKeys(activeRow);
       storeCompletedGameStatistics();
       return;
     };
@@ -187,7 +191,7 @@ export default function Game( {
     }, 750);
   };
 
-  function gameCompleted() {
+  function gameHasBeenWon() {
     let dailyWord = getStorage('turdle-daily-word').toLowerCase();
     let guesses = getStorage('turdle-data-key').guesses;
     let activeRow = getStorage('turdle-data-key').activeRow;
@@ -398,6 +402,9 @@ export default function Game( {
     };
 
     
+    if (!gameHasBeenWon()) stats.guessedIn.six--;
+
+    
     if (stats.currentStreak > stats.maxStreak 
       || stats.maxStreak === null) stats.maxStreak = stats.currentStreak;
 
@@ -479,7 +486,10 @@ export default function Game( {
         await getUserFromDatabaseToStoreLocally(user, isNewDay);
         fillStoredGuesses();
       }}
-      onClick={closeMenu}
+      onClick={() => {
+        closeMenu()
+        closeStatistics()
+      }}
       >
         <div 
           className="word-warning w-auto bg-red-50 border border-black rounded-md p-2 
