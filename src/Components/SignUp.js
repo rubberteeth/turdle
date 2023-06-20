@@ -90,7 +90,9 @@ export default function SignUp( { closeSignUp, createUser } ) {
           </label>
           <button 
             type='submit'
-            onClick={handleSubmit}
+            onClick={(e) => {
+              handleSubmit(e)
+            }}
             className='text-md w-4/6 mt-8 mb-4 rounded-lg border-2 bg-green-600 border-gray-800 
             pt-2 pb-2 font-bold text-gray-50 hover:text-green-600 hover:bg-gray-50'
           >
