@@ -4,7 +4,7 @@ import shareIcon from '../Assets/Pictures/share.png'
 
 import { doc, getDoc, getFirestore } from 'firebase/firestore';
 
-export default function Statistics( { closeStatistics } ) {
+export default function Statistics( { closeStatistics, getStorage } ) {
 
   const darkTheme = useTheme();
 
@@ -13,10 +13,23 @@ export default function Statistics( { closeStatistics } ) {
     color: darkTheme ? '#eee' : '#111',
   };
 
+  function gameHasBeenWon() {
+    let dailyWord = getStorage('turdle-daily-word').toLowerCase();
+    let guesses = getStorage('turdle-data-key').guesses;
+    let activeRow = getStorage('turdle-data-key').activeRow;
+
+    // check guess is stored for current guess row
+    if (guesses[activeRow] !== null) {
+      // return true if latest stored guess === daily word
+      if (guesses[activeRow].join('').toLowerCase() === dailyWord) return true;
+    };
+    return false;
+  };
+
   async function gatherData() {
     const data = {
       title: null,
-      text: `\n`
+      text: ``
     }
 
     // reference to used words document on db
@@ -26,13 +39,26 @@ export default function Statistics( { closeStatistics } ) {
     // use length of list to determine game number
     let gameNumber = usedWordsSnap.data().usedWords.length;
 
+    // get active row
+    let activeRow = JSON.parse(localStorage.getItem('turdle-data-key')).activeRow;
+    
+    function getScore() {
+      if (!gameHasBeenWon()) return (`X/6`)
+      return `${activeRow + 1}/6`
+    }
+
+    let score = getScore();
+
     data.title = `Turdle ${gameNumber}`;
+    data.text += `Turdle ${gameNumber} ${score} \n\n`
 
     let greenSquare = '🟩';
     let yellowSquare = '🟨';
     let graySquare = '⬛';
 
-    for (let i = 0; i <= JSON.parse(localStorage.getItem('turdle-data-key')).activeRow; i++) {
+
+
+    for (let i = 0; i <= activeRow; i++) {
       document.querySelector(`.guess-row-${i}`).childNodes.forEach(square => {
         switch (square.style.backgroundColor) {
           case `rgb(113, 113, 122)`:
@@ -51,8 +77,7 @@ export default function Statistics( { closeStatistics } ) {
       })
       data.text += `\n`
     }
-
-
+    
     return data
   }
 
