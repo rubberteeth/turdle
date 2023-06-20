@@ -47,7 +47,7 @@ export default function Menu( {
 
       {user && <p className='m-4 text-center text-2xl'>Hello {user}!</p>}
       
-      <ul className='w-full mt-8 p-6 flex flex-col gap-4'>
+      <ul className='w-full mt-16 p-6 flex flex-col gap-4'>
 
         <li className='flex w-full'>
           <label className='switch w-full flex items-center' htmlFor="darkmode"> 
