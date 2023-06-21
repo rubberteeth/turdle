@@ -13,6 +13,7 @@ export default function Game( {
   closeMenu, 
   closeStatistics,
   user, 
+  resetGameData,
   updateStatisticsData, 
   openStatistics,
   isLoading,
@@ -436,8 +437,16 @@ export default function Game( {
 
 
   async function isNewDayForUser(user) {
-    if (user === 'guest' || user === null) return;
     let today = new Date().toString().split(' ').slice(1, 4).join(' ');
+    let storage = getStorage('turdle-data-key')
+    if (user === 'guest' || user === null) {
+      // if new day for guest
+      if (storage.playerStatistics.lastGamePlayed !== today) {
+        // start new game
+        resetGameData()
+      }
+      return
+    }
     const userRef = doc(getFirestore(), 'users', user);
     const userSnap = await getDoc(userRef);
     const storedDate = userSnap.data().info.playerStatistics.lastGamePlayed
