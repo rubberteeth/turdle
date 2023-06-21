@@ -70,6 +70,10 @@ const dataTemplate = {
 function App() {
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true)
+  const [showMenu, setShowMenu] = useState(false);
+
+  //
+  // add continue as user component
 
   useEffect(() => {
     let user;
@@ -90,7 +94,6 @@ function App() {
     createUserWithEmailAndPassword(auth, email, password)
       .then((userCredential) => {
         const user = userCredential.user;
-        alert('account successfully created!')
         setUser(email)
         setUsername(email)
         addUserToDatabase(user)
@@ -191,14 +194,23 @@ function App() {
   // Menu and Dialog box functions;
 
   function openMenu() {
-    const menu = document.querySelector('.menu')
-    menu.classList.remove('hidden')
-    menu.className = 'menu bg-gray-300 absolute right-0 top-0 h-screen w-2/5 z-20 translate-x-0';
+    setShowMenu(true);
+
+    setTimeout(() => {
+      const menu = document.querySelector('.menu')
+      menu.classList.remove('hidden')
+      menu.className = 'menu bg-gray-300 absolute right-0 top-0 h-screen w-2/5 z-20 translate-x-0';
+    }, 1);
   }
 
   function closeMenu() {
-    const menu = document.querySelector('.menu')
-    menu.className = 'menu bg-gray-300 absolute right-0 top-0 w-2/5 h-screen z-20 translate-x-full';
+    try {
+      const menu = document.querySelector('.menu')
+      menu.className = 'menu bg-gray-300 absolute right-0 top-0 w-2/5 h-screen z-20 translate-x-full';
+      setTimeout(() => {
+      setShowMenu(false)
+    }, 701)}
+    catch (e) {console.log(e)}
   }
 
   function openHowTo() {
@@ -288,11 +300,13 @@ function App() {
   }
 
   function closeStatistics() {
+    try {
     const statistics = document.querySelector('.statistics');
     statistics.classList.remove('show');
     setTimeout(() => {
       statistics.close();
-    }, 500);
+    }, 500);}
+    catch(e) {console.log(e)}
   }
 
   function updateStatisticsData() {
@@ -341,7 +355,6 @@ function App() {
   }
 
 
-
   
 // ------ GAME FUNCTIONS
  
@@ -354,11 +367,9 @@ function App() {
     return storedDate !== today;
   }
 
-
   async function setWord() {
     // if day hasn't changed, return from function
     if (await isNewDay() !== true) return 
-    resetGameData()
 
     // reference to entire words list document;
     const fullWordsListRef = doc(getFirestore(), 'words', 'fullWordsList')
@@ -402,13 +413,12 @@ function App() {
     storeDailyWordLocally(randomWord)
   }
 
-  async function resetGameData() {
+  function resetGameData() {
     let storage = getStorage('turdle-data-key');
     storage.guesses = guessesTemplate;
     storage.activeRow = 0;
     setLocalStorage('turdle-data-key', storage)
   };
-
 
   return (
     <ThemeProvider>
@@ -420,21 +430,27 @@ function App() {
           setWord()
           storeDailyWordLocally()
         }}
-        className="app flex-grow flex flex-col justify-center items-center"
+        className="app flex flex-col justify-center items-center"
       >
         <Header 
           user={user}
           openMenu={openMenu}
         />
-
-        <Menu 
-          user={user}
-          signOutUser={signOutUser} 
-          openHowTo={openHowTo}
-          closeMenu={closeMenu}
-          openStatistics={openStatistics}
-          updateStatisticsData={updateStatisticsData}
-        />
+        {
+          showMenu 
+          ?
+            <Menu 
+              user={user}
+              signOutUser={signOutUser} 
+              openHowTo={openHowTo}
+              closeMenu={closeMenu}
+              openStatistics={openStatistics}
+              updateStatisticsData={updateStatisticsData}
+            />
+          :
+            null
+        }
+        
         <HowToPlayModal
           closeHowTo={closeHowTo}
         />
@@ -463,7 +479,9 @@ function App() {
             guessesTemplate={guessesTemplate}
             isLoading={isLoading}
             user={user}
+            resetGameData={resetGameData}
             closeMenu={closeMenu}
+            closeStatistics={closeStatistics}
             openStatistics={openStatistics}
             updateStatisticsData={updateStatisticsData}
           />
