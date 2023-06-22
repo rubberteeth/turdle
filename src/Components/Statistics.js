@@ -18,8 +18,6 @@ export default function Statistics( { closeStatistics, getStorage } ) {
     let guesses = getStorage('turdle-data-key').guesses;
     let activeRow = getStorage('turdle-data-key').activeRow;
 
-    
-
     // check guess is stored for current guess row
     if (guesses[activeRow] !== null) {
       // return true if latest stored guess === daily word
@@ -30,7 +28,7 @@ export default function Statistics( { closeStatistics, getStorage } ) {
 
   async function gatherData() {
     const data = {
-      title: null,
+      // title: null,
       text: ``
     }
 
