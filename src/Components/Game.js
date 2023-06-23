@@ -1,13 +1,12 @@
-import React, { useEffect, useState } from 'react'
-import { useTheme } from '../ThemeContext'
+import React, { useEffect, useState } from 'react';
+import { useTheme } from '../ThemeContext';
 import { collection, doc, getDoc, getFirestore, setDoc } from "firebase/firestore";  
 
-
-import Keyboard from './Keyboard'
+import Keyboard from './Keyboard';
 
 function getStorage(key) {
-  return JSON.parse(localStorage.getItem(key))
-}
+  return JSON.parse(localStorage.getItem(key));
+};
 
 export default function Game( { 
   closeMenu, 
@@ -32,9 +31,14 @@ export default function Game( {
   const boxStyles = {
     backgroundColor: '#c1c1c1'
   };
+
+  useEffect(() => {
+    if (user === 'guest') {
+      setActiveRow(getStorage('turdle-data-key').activeRow + 1)
+    }
+  }, [user]);
   
   useEffect(() => {
-
     function updateGuess() {
       // fill in corresponding row with current guess each time guess changes
       let guessRow = document.querySelectorAll(`.guess-row-${activeRow}>div`);
@@ -65,7 +69,6 @@ export default function Game( {
     };
   };
 
-
   function handleBackspace() {
     if (!currentGuess.length) return;
     setCurrentGuess(prev => [...prev.slice(0, prev.length - 1)]);
@@ -79,8 +82,8 @@ export default function Game( {
   async function handleGuess() {
     if (gameHasBeenWon()) return;
 
-    // game is finished
-    if (activeRow === 6) return;
+    // all attempts have been used
+    if (activeRow === 6) return
 
     // not a full word
     if (currentGuess.length !== 5) return;
@@ -180,7 +183,7 @@ export default function Game( {
       }, 2000);
       
     })
-  }
+  };
 
   function showWarningText(text) {
     let warningBox = document.querySelector('.word-warning');
@@ -209,9 +212,11 @@ export default function Game( {
     let storage = getStorage('turdle-data-key');
     storage.playerStatistics.lastGamePlayed = new Date().toString().split(' ').slice(1, 4).join(' ');
     localStorage.setItem('turdle-data-key', JSON.stringify(storage));
-  }
+  };
 
-  
+  let green = 'rgb(5, 150, 105)';
+  let yellow = 'rgb(251, 191, 36)';
+  let gray = 'rgb(113, 113, 122)';
 
   function animateRowsAndPaintKeys(row) {
     // create copy of daily word to mutate
@@ -268,18 +273,18 @@ export default function Game( {
         switch(guess[guessLetterIndex]) {
           case 0: 
             // letter is in the correct position
-            square.style.backgroundColor = 'rgb(5, 150, 105)';
-            paintKey(square.textContent, 'rgb(5, 150, 105)');
+            square.style.backgroundColor = green;
+            paintKey(square.textContent, green);
             break;
           case 1:
             // letter is in the word in the wrong position
-            square.style.backgroundColor = 'rgb(251, 191, 36)';
-            paintKey(square.textContent, 'rgb(251, 191, 36)');
+            square.style.backgroundColor = yellow;
+            paintKey(square.textContent, yellow);
             break;
           default:
             // letter isn't in the word
-            square.style.backgroundColor = 'rgb(113, 113, 122)';
-            paintKey(square.textContent, 'rgb(113, 113, 122)');
+            square.style.backgroundColor = gray;
+            paintKey(square.textContent, gray);
             break;
         }
 
@@ -300,10 +305,10 @@ export default function Game( {
 
   function paintKey(letter, style) {
     let key = document.querySelector(`.letter.${letter.toLowerCase()}`);
+    if (key.style.backgroundColor === green) return;
+    if (key.style.backgroundColor === yellow && style === gray) return
     key.style.backgroundColor = style;
   };
-
-
 
   // storage related functions ----------
 
@@ -425,7 +430,6 @@ export default function Game( {
     }, 3500);
   };
 
-
   async function storeGuessesOnDB() {
     if (user !== 'guest') {
       const usersRef = collection(getFirestore(), "users");
@@ -434,7 +438,6 @@ export default function Game( {
       }, {merge: true});
     }
   };
-
 
   async function isNewDayForUser(user) {
     let today = new Date().toString().split(' ').slice(1, 4).join(' ');
@@ -451,7 +454,7 @@ export default function Game( {
     const userSnap = await getDoc(userRef);
     const storedDate = userSnap.data().info.playerStatistics.lastGamePlayed
     return storedDate !== today;
-  }
+  };
 
 
   async function getUserFromDatabaseToStoreLocally(email, isNewDay=false) {
@@ -482,7 +485,7 @@ export default function Game( {
     storage.username = info.username;
 
     localStorage.setItem('turdle-data-key', JSON.stringify(storage));
-  }
+  };
 
   return (
     <>
@@ -563,5 +566,5 @@ export default function Game( {
     </>
     
     
-  )
-}
+  );
+};
