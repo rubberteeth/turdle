@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import './index.css';
 import { ThemeProvider } from "./ThemeContext";
-
 import WelcomePage from "./Components/WelcomePage";
 import Menu from "./Components/Menu";
 import Game from "./Components/Game";
@@ -11,9 +10,8 @@ import SignUp from "./Components/SignUp";
 import SignIn from "./Components/SignIn";
 import DataWarning from "./Components/GuestDataWarning";
 import Statistics from "./Components/Statistics";
-
 import { firebaseConfig } from "./firebaseConfig";
-import { initializeApp } from 'firebase/app'
+import { initializeApp } from 'firebase/app';
 
 import { 
   collection, 
@@ -29,9 +27,6 @@ import {
   signInWithEmailAndPassword,
   signOut
 } from "firebase/auth";
-
-
-
 
 const playerInfoTemplate = {
   gamesPlayed: 0,
@@ -49,7 +44,7 @@ const playerInfoTemplate = {
   incomplete: 0,
   lastGamePlayed: null,
   lastGameCompleted: null,
-}
+};
 
 const guessesTemplate = {
   0: null,
@@ -58,18 +53,18 @@ const guessesTemplate = {
   3: null,
   4: null,
   5: null,
-}
+};
 
 const dataTemplate = {
   username: null, 
   activeRow: 0,
   guesses: guessesTemplate,
   playerStatistics: playerInfoTemplate,
-}
+};
 
 function App() {
   const [user, setUser] = useState(null);
-  const [isLoading, setIsLoading] = useState(true)
+  const [isLoading, setIsLoading] = useState(true);
   const [showMenu, setShowMenu] = useState(false);
 
   //
@@ -82,12 +77,12 @@ function App() {
     }
     if (user !== null) setUser(user)
     setTimeout(() => {setIsLoading(false)}, 600);
-  }, [])
+  }, []);
 
 
 // ----- User functions 
 
-  const auth = getAuth()
+  const auth = getAuth();
 
   function createUser(email, password) {
     setIsLoading(true);
@@ -106,7 +101,7 @@ function App() {
         alert(`failed to create account: ${e.code} `)
       });
     
-  }
+  };
 
   async function signInUser(email, password) {
     signInWithEmailAndPassword(auth, email, password)
@@ -118,7 +113,7 @@ function App() {
         console.log(e.code, e.message)
         alert(`log in attempt failed: ${e.message}`)
       })
-  }
+  };
 
   function signOutUser() {
     if (!user) return
@@ -132,7 +127,7 @@ function App() {
         console.log(e.code, e.message)
         alert(e.code)
       })
-  }
+  };
 
 
 
@@ -149,21 +144,21 @@ function App() {
       info: dataTemplate,
       uid: user.uid
     });
-  } 
+  };
 
   function getStorage(key) {
     return JSON.parse(localStorage.getItem(key))
-  }
+  };
 
   function setLocalStorage(key, data) {
     localStorage.setItem(key, JSON.stringify(data));
-  }
+  };
 
   function setUsername(username) {
     let storage = getStorage('turdle-data-key');
     storage.username = username;
     setLocalStorage('turdle-data-key', storage);
-  }
+  };
 
   function initLocalStorageData() {
     if (localStorage.getItem('turdle-data-key')) {
@@ -173,13 +168,13 @@ function App() {
       localStorage.setItem('turdle-theme', JSON.stringify(false));
       console.log('local storage initialized');
     }
-  }
+  };
   
   async function getDailyWordFromDB() {
     const word = doc(getFirestore(), 'words', 'dailyWord');
     const wordSnap = await getDoc(word);
     return await wordSnap.data().word
-  }
+  };
 
   async function storeDailyWordLocally(word) {
     if (word) {
@@ -187,7 +182,7 @@ function App() {
       return
     } 
     localStorage.setItem('turdle-daily-word', JSON.stringify(await getDailyWordFromDB()));
-  }
+  };
 
   
 
@@ -201,17 +196,17 @@ function App() {
       menu.classList.remove('hidden')
       menu.className = 'menu bg-gray-300 absolute right-0 top-0 h-screen w-2/5 z-20 translate-x-0';
     }, 1);
-  }
+  };
 
   function closeMenu() {
-    try {
       const menu = document.querySelector('.menu')
-      menu.className = 'menu bg-gray-300 absolute right-0 top-0 w-2/5 h-screen z-20 translate-x-full';
-      setTimeout(() => {
-      setShowMenu(false)
-    }, 701)}
-    catch (e) {console.log(e)}
-  }
+      if (menu) {
+        menu.className = 'menu bg-gray-300 absolute right-0 top-0 w-2/5 h-screen z-20 translate-x-full';
+        // remove menu from document flow after animation
+        setTimeout(() => {
+          setShowMenu(false)
+        }, 701)}
+  };
 
   function openHowTo() {
     const dialog = document.querySelector('.page-1');
@@ -244,7 +239,7 @@ function App() {
     } catch (e) {console.log(e)} 
     signUp.showModal();
     signUp.classList.add('show');
-  }
+  };
 
   function closeSignUp() {
     const signUp = document.querySelector('.sign-up');
@@ -252,7 +247,7 @@ function App() {
     setTimeout(() => {
       signUp.close()
     }, 500);
-  }
+  };
 
   function openSignIn() {
     const signIn = document.querySelector('.sign-in');
@@ -263,7 +258,7 @@ function App() {
     } catch(e) {console.log(e)} 
     signIn.showModal();
     signIn.classList.add('show')
-  }
+  };
 
   function closeSignIn() {
     const signIn = document.querySelector('.sign-in');
@@ -271,7 +266,7 @@ function App() {
     setTimeout(() => {
       signIn.close();
     }, 500)
-  }
+  };
 
   function openDataWarning() {
     const dataWarning = document.querySelector('.data-warning');
@@ -280,7 +275,7 @@ function App() {
     } catch(e) {console.log(e)};
     dataWarning.showModal();
     dataWarning.classList.add('show');
-  }
+  };
 
   function closeDataWarning() {
     const dataWarning = document.querySelector('.data-warning');
@@ -288,7 +283,7 @@ function App() {
     setTimeout(() => {
       dataWarning.close();
     }, 500)
-  }
+  };
 
   function openStatistics() {
     const statistics = document.querySelector('.statistics');
@@ -297,7 +292,7 @@ function App() {
     } catch(e) {console.log(e)};
     statistics.showModal();
     statistics.classList.add('show');
-  }
+  };
 
   function closeStatistics() {
     try {
@@ -307,7 +302,7 @@ function App() {
       statistics.close();
     }, 500);}
     catch(e) {console.log(e)}
-  }
+  };
 
   function updateStatisticsData() {
     const playerStatistics = getStorage('turdle-data-key').playerStatistics;
@@ -352,9 +347,7 @@ function App() {
     guessedInFiveDiv.style.width = `${determineWidth(playerStatistics.guessedIn.five)}px`;
     guessedInSixDiv.style.width = `${determineWidth(playerStatistics.guessedIn.six)}px`;
 
-  }
-
-
+  };
   
 // ------ GAME FUNCTIONS
  
@@ -365,7 +358,7 @@ function App() {
     const dailyWordSnap = await getDoc(dailyWordRef);
     const storedDate = dailyWordSnap.data().day;
     return storedDate !== today;
-  }
+  };
 
   async function setWord() {
     // if day hasn't changed, return from function
@@ -411,7 +404,7 @@ function App() {
     })
 
     storeDailyWordLocally(randomWord)
-  }
+  };
 
   function resetGameData() {
     let storage = getStorage('turdle-data-key');
@@ -501,8 +494,6 @@ function App() {
 };
 
 export default App;
-
-
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
