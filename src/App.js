@@ -66,6 +66,7 @@ function App() {
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [showMenu, setShowMenu] = useState(false);
+  const [error, setError] = useState(false)
 
   //
   // add continue as user component
@@ -130,9 +131,7 @@ function App() {
   };
 
 
-
 //  ----- Local storage and data functions
-
 
 
   async function addUserToDatabase(user) {
@@ -185,7 +184,6 @@ function App() {
   };
 
   
-
   // Menu and Dialog box functions;
 
   function openMenu() {
@@ -194,7 +192,7 @@ function App() {
     setTimeout(() => {
       const menu = document.querySelector('.menu')
       menu.classList.remove('hidden')
-      menu.className = 'menu bg-gray-300 absolute right-0 top-0 h-screen w-2/5 z-20 translate-x-0';
+      menu.className = 'menu bg-gray-300 absolute right-0 top-0 h-screen w-2/5 z-30 translate-x-0';
     }, 1);
   };
 
@@ -330,7 +328,9 @@ function App() {
 
     function determineWidth(value) {
       if (value === 0 || playerStatistics.gamesPlayed === 0) return 50;
-      return Math.floor(((value / playerStatistics.gamesPlayed) * 100) * 2.5) + 50;
+      let percentageBasedWidth = Math.floor(((value / playerStatistics.gamesPlayed) * 100) * 2.5) + 50
+      if (percentageBasedWidth < 275) return percentageBasedWidth
+      return 275; 
     }
 
     guessedInOneP.textContent = playerStatistics.guessedIn.one;
@@ -357,12 +357,18 @@ function App() {
     const dailyWordRef = doc(getFirestore(), 'words', 'dailyWord');
     const dailyWordSnap = await getDoc(dailyWordRef);
     const storedDate = dailyWordSnap.data().day;
+    // today=0 
+    if (typeof today !== 'string' || typeof storedDate !== 'string') {
+      setError(true)
+      throw new Error('failed to accurately retrieve date')
+    }
     return storedDate !== today;
   };
 
   async function setWord() {
     // if day hasn't changed, return from function
     if (await isNewDay() !== true) return 
+    if (error) return
 
     // reference to entire words list document;
     const fullWordsListRef = doc(getFirestore(), 'words', 'fullWordsList')
@@ -415,80 +421,85 @@ function App() {
 
   return (
     <ThemeProvider>
-      { isLoading 
-      ? <h1 className="flex items-center m-auto">Loading</h1>
-      : <div 
-        onLoad={() => {
-          initLocalStorageData()
-          setWord()
-          storeDailyWordLocally()
-        }}
-        className="app flex flex-col justify-center items-center"
-      >
-        <Header 
-          user={user}
-          openMenu={openMenu}
-        />
-        {
-          showMenu 
-          ?
-            <Menu 
+      { 
+        isLoading 
+        ? <h1 className="flex items-center m-auto">Loading</h1>
+        : <div 
+          onLoad={() => {
+            initLocalStorageData()
+            setWord()
+            storeDailyWordLocally()
+          }}
+          className="app flex flex-col justify-center items-center"
+          > 
+            {/* use an error state to prevent any further interaction and to force a refresh from user */}
+            {
+              error 
+              ? <div className="error font-bubble text-center flex justify-center items-center h-screen w-full absolute z-20 bg-red-50">
+                  Oops...Something went wrong! <br/> Please refresh the page.
+                </div>
+              : null
+            }
+            <Header 
               user={user}
-              signOutUser={signOutUser} 
-              openHowTo={openHowTo}
-              closeMenu={closeMenu}
-              openStatistics={openStatistics}
-              updateStatisticsData={updateStatisticsData}
+              openMenu={openMenu}
             />
-          :
-            null
-        }
-        
-        <HowToPlayModal
-          closeHowTo={closeHowTo}
-        />
-        <SignUp 
-          closeSignUp={closeSignUp}
-          createUser={createUser}
-        />
-        <SignIn 
-          closeSignIn={closeSignIn}
-          signInUser={signInUser}
-        />
-        <DataWarning 
-          resetGameData={resetGameData}
-          closeDataWarning={closeDataWarning}
-          setUser={setUser}
-        />
-        <Statistics 
-          closeStatistics={closeStatistics}
-          getStorage={getStorage}
-        />
-        
-
-        {user
-        ? 
-          <Game 
-            guessesTemplate={guessesTemplate}
-            isLoading={isLoading}
-            user={user}
-            resetGameData={resetGameData}
-            closeMenu={closeMenu}
-            closeStatistics={closeStatistics}
-            openStatistics={openStatistics}
-            updateStatisticsData={updateStatisticsData}
-          />
-        :
-          <WelcomePage 
-            setUser={setUser}
-            openHowTo={openHowTo}
-            closeMenu={closeMenu}
-            openSignUp={openSignUp}
-            openSignIn={openSignIn}
-            openDataWarning={openDataWarning}
-          />
-        }
-      </div>}
+            {/* use a show menu state to remove menu from document flow */}
+            {
+              showMenu 
+              ? <Menu 
+                  user={user}
+                  signOutUser={signOutUser} 
+                  openHowTo={openHowTo}
+                  closeMenu={closeMenu}
+                  openStatistics={openStatistics}
+                  updateStatisticsData={updateStatisticsData}
+                />
+              : null
+            }
+            <HowToPlayModal
+              closeHowTo={closeHowTo}
+            />
+            <SignUp 
+              closeSignUp={closeSignUp}
+              createUser={createUser}
+            />
+            <SignIn 
+              closeSignIn={closeSignIn}
+              signInUser={signInUser}
+            />
+            <DataWarning 
+              resetGameData={resetGameData}
+              closeDataWarning={closeDataWarning}
+              setUser={setUser}
+            />
+            <Statistics 
+              closeStatistics={closeStatistics}
+              getStorage={getStorage}
+            />
+            {
+              user
+              ? <Game 
+                guessesTemplate={guessesTemplate}
+                isLoading={isLoading}
+                user={user}
+                resetGameData={resetGameData}
+                closeMenu={closeMenu}
+                closeStatistics={closeStatistics}
+                openStatistics={openStatistics}
+                updateStatisticsData={updateStatisticsData}
+                />
+              : <WelcomePage 
+                setUser={setUser}
+                openHowTo={openHowTo}
+                closeMenu={closeMenu}
+                openSignUp={openSignUp}
+                openSignIn={openSignIn}
+                openDataWarning={openDataWarning}
+                />
+            }
+        </div>
+      }
     </ThemeProvider>
   );
 };
