@@ -33,8 +33,13 @@ export default function Game( {
   };
 
   useEffect(() => {
+    let row = getStorage('turdle-data-key').activeRow
     if (user === 'guest') {
-      setActiveRow(getStorage('turdle-data-key').activeRow + 1)
+      setActiveRow(() => {
+        let rowFive = getStorage('turdle-data-key').guesses[5];
+        if (row === 5 && rowFive !== null && rowFive.length === 5) return 6
+        return row
+      })
     }
   }, [user]);
   
@@ -91,7 +96,7 @@ export default function Game( {
     // guess isn't in word list
     if (await guessIsInWordList() === false) {
       shakeRow();
-      showWarningText('not in word list');
+      showTextBox('not in word list', 750);
       return;
     };
 
@@ -106,22 +111,22 @@ export default function Game( {
       setTimeout(() => {
         switch (activeRow) {
           case 0:
-            showWarningText('WOW!')
+            showTextBox('WOW!', 750)
             break;
           case 1:
-            showWarningText('SWEET!')
+            showTextBox('SWEET!', 750)
             break;
           case 2:
-            showWarningText('NICE!');
+            showTextBox('NICE!', 750);
             break;
           case 3:
-            showWarningText('GREAT!');
+            showTextBox('GREAT!', 750);
             break
           case 4: 
-            showWarningText('GOOD JOB!');
+            showTextBox('GOOD JOB!', 750);
             break
           case 5:
-            showWarningText('PHEW!');
+            showTextBox('PHEW!', 750);
             break
           default:
             break;
@@ -135,6 +140,9 @@ export default function Game( {
     if (activeRow === 5) {
       storeGuessLocally();
       animateRowsAndPaintKeys(activeRow);
+      setTimeout(() => {
+        showTextBox(getStorage('turdle-daily-word'), 2000)
+      }, 3000);
       storeCompletedGameStatistics();
       return;
     };
@@ -185,14 +193,14 @@ export default function Game( {
     })
   };
 
-  function showWarningText(text) {
+  function showTextBox(text, time) {
     let warningBox = document.querySelector('.word-warning');
     let warningText = document.querySelector('.word-warning-text');
     if (text) warningText.textContent = text;
     warningBox.classList.remove('invisible');
     setTimeout(() => {
       document.querySelector('.word-warning').classList.add('invisible');
-    }, 750);
+    }, time);
   };
 
   function gameHasBeenWon() {
@@ -354,7 +362,7 @@ export default function Game( {
       // use UTC day (0-6 for mon-sun) to check within one day
       let lastDay = new Date(stats.lastGameCompleted).getUTCDay();
       let today = new Date().getUTCDay();
-      // check days are also within 48 hours
+      // check days are also within 48 hours of each other
       if (lastDay + 1 === today || (lastDay === 6 && today === 0)) {
           // 172_800_000 ms === 48 hours
         if (new Date().getTime() - new Date(stats.lastGameCompleted).getTime() < 172_800_000) {
@@ -370,7 +378,7 @@ export default function Game( {
       stats.currentStreak = 1;
     };
 
-    // set 'new' last game played
+    // update last game played
     stats.lastGameCompleted = new Date().toString().split(' ').slice(1, 4).join(' ');
 
     // determine win percentage
@@ -427,7 +435,7 @@ export default function Game( {
     updateStatisticsData();
     setTimeout(() => {
       openStatistics();
-    }, 3500);
+    }, 5500);
   };
 
   async function storeGuessesOnDB() {
