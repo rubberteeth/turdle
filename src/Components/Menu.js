@@ -34,7 +34,7 @@ export default function Menu( {
   return (
     <nav 
       style={styles}
-      className='menu bg-gray-300 absolute top-0 right-0 w-2/5 h-screen z-20 
+      className='menu bg-gray-300 absolute top-0 right-0 w-2/5 h-screen z-30 
       translate-x-full font-cinzel'
     >
       <div 

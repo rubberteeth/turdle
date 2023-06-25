@@ -107,7 +107,7 @@ export default function Statistics( { closeStatistics, getStorage } ) {
         </div>
         <div className='flex flex-col items-center'>
           <p className='current-streak text-3xl font-bold'></p>
-          <p className='text-sm w-max font-bold'>Current Streak</p>
+          <p className='text-sm w-max font-bold'>Streak</p>
         </div>
         <div className='flex flex-col items-center'>
           <p className='max-streak text-3xl font-bold'></p>
