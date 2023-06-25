@@ -68,9 +68,7 @@ function App() {
   const [showMenu, setShowMenu] = useState(false);
   const [error, setError] = useState(false)
 
-  //
-  // add continue as user component
-
+  // sign in user on load if one exists in storage
   useEffect(() => {
     let user;
     if (getStorage('turdle-data-key')) {
@@ -79,7 +77,6 @@ function App() {
     if (user !== null) setUser(user)
     setTimeout(() => {setIsLoading(false)}, 600);
   }, []);
-
 
 // ----- User functions 
 
@@ -188,7 +185,6 @@ function App() {
 
   function openMenu() {
     setShowMenu(true);
-
     setTimeout(() => {
       const menu = document.querySelector('.menu')
       menu.classList.remove('hidden')
@@ -302,52 +298,12 @@ function App() {
     catch(e) {console.log(e)}
   };
 
-  function updateStatisticsData() {
-    const playerStatistics = getStorage('turdle-data-key').playerStatistics;
-    const gamesPlayedElement = document.querySelector('.games-played');
-    const winPercentElement = document.querySelector('.win-percentage');
-    const currentStreakElement = document.querySelector('.current-streak');
-    const maxStreakElement = document.querySelector('.max-streak');
-    const guessedInOneDiv = document.querySelector('div.gi-1');
-    const guessedInTwoDiv = document.querySelector('div.gi-2');
-    const guessedInThreeDiv = document.querySelector('div.gi-3');
-    const guessedInFourDiv = document.querySelector('div.gi-4');
-    const guessedInFiveDiv = document.querySelector('div.gi-5');
-    const guessedInSixDiv = document.querySelector('div.gi-6');
-    const guessedInOneP = document.querySelector('p.gi-1');
-    const guessedInTwoP = document.querySelector('p.gi-2');
-    const guessedInThreeP = document.querySelector('p.gi-3');
-    const guessedInFourP = document.querySelector('p.gi-4');
-    const guessedInFiveP = document.querySelector('p.gi-5');
-    const guessedInSixP = document.querySelector('p.gi-6');
-
-    gamesPlayedElement.textContent = playerStatistics.gamesPlayed;
-    winPercentElement.textContent = playerStatistics.winPercentage;
-    currentStreakElement.textContent = playerStatistics.currentStreak;
-    maxStreakElement.textContent = playerStatistics.maxStreak;
-
-    function determineWidth(value) {
-      if (value === 0 || playerStatistics.gamesPlayed === 0) return 50;
-      let percentageBasedWidth = Math.floor(((value / playerStatistics.gamesPlayed) * 100) * 2.5) + 50
-      if (percentageBasedWidth < 275) return percentageBasedWidth
-      return 275; 
-    }
-
-    guessedInOneP.textContent = playerStatistics.guessedIn.one;
-    guessedInTwoP.textContent = playerStatistics.guessedIn.two;
-    guessedInThreeP.textContent = playerStatistics.guessedIn.three;
-    guessedInFourP.textContent = playerStatistics.guessedIn.four;
-    guessedInFiveP.textContent = playerStatistics.guessedIn.five;
-    guessedInSixP.textContent = playerStatistics.guessedIn.six;
-
-    guessedInOneDiv.style.width = `${determineWidth(playerStatistics.guessedIn.one)}px`;
-    guessedInTwoDiv.style.width = `${determineWidth(playerStatistics.guessedIn.two)}px`;
-    guessedInThreeDiv.style.width = `${determineWidth(playerStatistics.guessedIn.three)}px`;
-    guessedInFourDiv.style.width = `${determineWidth(playerStatistics.guessedIn.four)}px`;
-    guessedInFiveDiv.style.width = `${determineWidth(playerStatistics.guessedIn.five)}px`;
-    guessedInSixDiv.style.width = `${determineWidth(playerStatistics.guessedIn.six)}px`;
-
-  };
+  const toggleGameOpacity = () => {
+    let game = document.querySelector('.game');
+    let opacity = game.style.opacity; 
+    if (opacity === '1') game.style.opacity = 0;
+    else game.style.opacity = 1;
+  }
   
 // ------ GAME FUNCTIONS
  
@@ -357,9 +313,9 @@ function App() {
     const dailyWordRef = doc(getFirestore(), 'words', 'dailyWord');
     const dailyWordSnap = await getDoc(dailyWordRef);
     const storedDate = dailyWordSnap.data().day;
-    // today=0 
     if (typeof today !== 'string' || typeof storedDate !== 'string') {
       setError(true)
+      toggleGameOpacity()
       throw new Error('failed to accurately retrieve date')
     }
     return storedDate !== today;
@@ -417,6 +373,53 @@ function App() {
     storage.guesses = guessesTemplate;
     storage.activeRow = 0;
     setLocalStorage('turdle-data-key', storage)
+  };
+
+  function updateStatisticsData() {
+    const playerStatistics = getStorage('turdle-data-key').playerStatistics;
+    const gamesPlayedElement = document.querySelector('.games-played');
+    const winPercentElement = document.querySelector('.win-percentage');
+    const currentStreakElement = document.querySelector('.current-streak');
+    const maxStreakElement = document.querySelector('.max-streak');
+    const guessedInOneDiv = document.querySelector('div.gi-1');
+    const guessedInTwoDiv = document.querySelector('div.gi-2');
+    const guessedInThreeDiv = document.querySelector('div.gi-3');
+    const guessedInFourDiv = document.querySelector('div.gi-4');
+    const guessedInFiveDiv = document.querySelector('div.gi-5');
+    const guessedInSixDiv = document.querySelector('div.gi-6');
+    const guessedInOneP = document.querySelector('p.gi-1');
+    const guessedInTwoP = document.querySelector('p.gi-2');
+    const guessedInThreeP = document.querySelector('p.gi-3');
+    const guessedInFourP = document.querySelector('p.gi-4');
+    const guessedInFiveP = document.querySelector('p.gi-5');
+    const guessedInSixP = document.querySelector('p.gi-6');
+
+    gamesPlayedElement.textContent = playerStatistics.gamesPlayed;
+    winPercentElement.textContent = playerStatistics.winPercentage;
+    currentStreakElement.textContent = playerStatistics.currentStreak;
+    maxStreakElement.textContent = playerStatistics.maxStreak;
+
+    function determineWidth(value) {
+      if (value === 0 || playerStatistics.gamesPlayed === 0) return 50;
+      let percentageBasedWidth = Math.floor(((value / playerStatistics.gamesPlayed) * 100) * 2.5) + 50
+      if (percentageBasedWidth < 275) return percentageBasedWidth
+      return 275; 
+    }
+
+    guessedInOneP.textContent = playerStatistics.guessedIn.one;
+    guessedInTwoP.textContent = playerStatistics.guessedIn.two;
+    guessedInThreeP.textContent = playerStatistics.guessedIn.three;
+    guessedInFourP.textContent = playerStatistics.guessedIn.four;
+    guessedInFiveP.textContent = playerStatistics.guessedIn.five;
+    guessedInSixP.textContent = playerStatistics.guessedIn.six;
+
+    guessedInOneDiv.style.width = `${determineWidth(playerStatistics.guessedIn.one)}px`;
+    guessedInTwoDiv.style.width = `${determineWidth(playerStatistics.guessedIn.two)}px`;
+    guessedInThreeDiv.style.width = `${determineWidth(playerStatistics.guessedIn.three)}px`;
+    guessedInFourDiv.style.width = `${determineWidth(playerStatistics.guessedIn.four)}px`;
+    guessedInFiveDiv.style.width = `${determineWidth(playerStatistics.guessedIn.five)}px`;
+    guessedInSixDiv.style.width = `${determineWidth(playerStatistics.guessedIn.six)}px`;
+
   };
 
   return (
