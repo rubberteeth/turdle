@@ -439,7 +439,7 @@ function App() {
             {
               error 
               ? <div className="error font-bubble text-center flex justify-center items-center h-screen w-full absolute z-20 bg-red-50">
-                  Oops...Something went wrong! <br/> Please refresh the page.
+                  Oops...<br/>Something went wrong! <br/>Please refresh the page.
                 </div>
               : null
             }
