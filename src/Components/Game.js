@@ -88,7 +88,11 @@ export default function Game( {
     if (gameHasBeenWon()) return;
 
     // all attempts have been used
-    if (activeRow === 6) return
+    if (activeRow === 6) return;
+
+    // extra protection check for errors when spamming enter key,
+    // if there is no guess in the active slot return from function
+    if (getStorage('turdle-data-key').guesses[getStorage('turdle-data-key').activeRow] !== null) return;
 
     // not a full word
     if (currentGuess.length !== 5) return;
@@ -102,7 +106,7 @@ export default function Game( {
 
     // guess is correct show stats and end game loop
     if (lowerCaseGuess() === getDailyWordFromStorage().toLowerCase()) {
-      updateLastGamePlayed()
+      updateLastGamePlayed();
       storeGuessLocally();
       animateRowsAndPaintKeys(activeRow);
       setTimeout(() => {
@@ -148,7 +152,7 @@ export default function Game( {
     };
 
     // at this point guess is valid and game hasn't been won
-    updateLastGamePlayed()
+    updateLastGamePlayed();
     storeGuessLocally();
     incrementLocallyStoredActiveRow();
     storeGuessesOnDB();
