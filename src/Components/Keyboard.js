@@ -4,7 +4,8 @@ import backspace from '../Assets/Pictures/backspace.png'
 export default function Keyboard( { 
   handleLetterInput,
   handleGuess,
-  handleBackspace
+  handleBackspace,
+  enterButtonRef
   } ) {
 
   const keyStyles = {
@@ -46,6 +47,7 @@ export default function Keyboard( {
           style={keyStyles}
           className='enter'
           onClick={handleGuess}
+          ref={enterButtonRef}
         >
           ENTER
         </div>

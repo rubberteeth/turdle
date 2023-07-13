@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useTheme } from '../ThemeContext';
 import { collection, doc, getDoc, getFirestore, setDoc } from "firebase/firestore";  
 
@@ -22,6 +22,8 @@ export default function Game( {
   const [activeRow, setActiveRow] = useState(0);
 
   const darkTheme = useTheme();
+
+  const enterButtonRef = useRef()
 
   const styles = {
     backgroundColor : darkTheme ? 'rgb(110 125 140)' : 'rgb(245, 245, 245)',
@@ -79,20 +81,27 @@ export default function Game( {
     setCurrentGuess(prev => [...prev.slice(0, prev.length - 1)]);
   };
 
+  function restoreEnterButton() {
+    enterButtonRef.current.style.pointerEvents = 'auto'
+  }  
+
   function handleLetterInput(letter) {
+    restoreEnterButton()
     if (currentGuess.length === 5) return;
     setCurrentGuess(prev => [...prev, letter]);
   }; 
 
   async function handleGuess() {
+    // remove pointer events to prevent bug
+    enterButtonRef.current.style.pointerEvents = 'none'
+
+
     if (gameHasBeenWon()) return;
 
     // all attempts have been used
-    if (activeRow === 6) return;
+    if (activeRow === 6) return; 
 
-    // extra protection check for errors when spamming enter key,
-    // if there is no guess in the active slot return from function
-    if (getStorage('turdle-data-key').guesses[getStorage('turdle-data-key').activeRow] !== null) return;
+    
 
     // not a full word
     if (currentGuess.length !== 5) return;
@@ -572,6 +581,7 @@ export default function Game( {
           handleLetterInput={handleLetterInput}
           handleBackspace={handleBackspace}
           handleGuess={handleGuess}
+          enterButtonRef={enterButtonRef}
         />
       </div>
       }
